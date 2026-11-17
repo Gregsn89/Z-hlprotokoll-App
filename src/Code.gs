@@ -519,7 +519,7 @@ function calcTotals_(v, tresor) {
     return BILLS.reduce(function (s, b) { return s + b * v[p + '_' + b]; }, 0);
   };
   const sumEC = v.ec_links + v.ec_rechts;
-  const unbar = sumEC + v.rechnungen;
+  const unbar = sumEC;                                // Rechnungen entfallen
   const scheine = bills('ist');
   const klein = COIN_CENTS.reduce(function (s, c) { return s + v['klein_' + c]; }, 0);
   const ent1 = bills('ent1');
@@ -630,7 +630,7 @@ function fieldDefs_() {
   const d = [];
   d.push(['ec_links', 'G7', 'EC links (2481), Betrag in €', 'Eingabe']);
   d.push(['ec_rechts', 'I7', 'EC rechts (2325), Betrag in €', 'Eingabe']);
-  d.push(['rechnungen', 'K9', 'Rechnungen, Betrag in €', 'Eingabe']);
+  d.push(['rechnungen', 'K9', 'Rechnungen (entfällt, wird auf 0 gesetzt; Zelle hier leeren = nicht anfassen)', 'Nullen']);
   BILLS.forEach(function (b, i) {
     d.push(['ist_' + b, 'BCDEF'.charAt(i) + '16', 'Scheine in Kasse (Ist), Anzahl ' + b + ' €', 'Eingabe']);
   });

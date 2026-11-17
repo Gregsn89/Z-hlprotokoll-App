@@ -324,7 +324,7 @@ console.log('5. Validierung');
   const bad = (label, mut) => { const p = basePayload(); mut(p); const r = save(e, p); ok(r.ok === false, label + ' → abgelehnt', r.message); };
   bad('negativ', p => p.v.ec_links = -5);
   bad('Anzahl mit Komma', p => p.v.ist_5 = 2.5);
-  bad('Text', p => p.v.rechnungen = 'abc');
+  bad('Text', p => p.v.ec_links = 'abc');
   bad('Münzbetrag kein Vielfaches (0,30 bei 50 ct)', p => p.v.klein_50 = 0.3);
   bad('Datum falsch', p => p.date = '10.11.2026');
   bad('31.02.', p => p.date = '2026-02-31');

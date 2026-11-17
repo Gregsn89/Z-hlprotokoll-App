@@ -342,15 +342,12 @@
 
   function build() {
     // Kartenterminals & Rechnungen
-    var c = section('Karten-Terminals & Rechnungen');
+    var c = section('Karten-Terminals');
     var g = el('div', 'grid two');
     g.appendChild(lab('EC links (2481)', input('ec_links', false)));
     g.appendChild(lab('EC rechts (2325)', input('ec_rechts', false)));
     c.appendChild(g);
     c.appendChild(sumRow('b', 'Summe EC', 'o_sumec'));
-    var g2 = el('div', 'grid'); g2.style.marginTop = '12px';
-    g2.appendChild(lab('Rechnungen', input('rechnungen', false)));
-    c.appendChild(g2);
     c.appendChild(sumRow('b', 'Unbarer Umsatz', 'o_unbar'));
 
     // Scheine in Kasse
@@ -398,7 +395,7 @@
     var r2 = function (x) { return Math.round(x * 100) / 100; };
     var bills = function (p) { return BILLS.reduce(function (s, b) { return s + b * v[p + '_' + b]; }, 0); };
     var sumEC = v.ec_links + v.ec_rechts;
-    var unbar = sumEC + v.rechnungen;
+    var unbar = sumEC;
     var scheine = bills('ist');
     var klein = COINS.reduce(function (s, c) { return s + v['klein_' + c]; }, 0);
     var ent1 = bills('ent1');
