@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zählprotokoll</title>
+  <style>
+    :root {
+      --green: #a9d08e; --green-bg: #eef6e8; --yellow: #ffe94d; --blue: #d9e2f3;
+      --ink: #1f2933; --mute: #616e7c; --err: #c62828; --ok: #1b5e20;
+      color-scheme: light;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 16px 12px 40px;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 17px; background: #f1f3f5; color: var(--ink);
+    }
+    main { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+    h1 { margin: 6px 0 0; font-size: 24px; }
+    h2 { margin: 0 0 10px; font-size: 18px; }
+    .card { background: #fff; border-radius: 14px; padding: 14px; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+    .hint { margin: 0 0 10px; color: var(--mute); font-size: 15px; line-height: 1.4; }
+    .legend { display: flex; gap: 8px; flex-wrap: wrap; font-size: 14px; }
+    .chip { padding: 3px 10px; border-radius: 999px; }
+    .g { background: var(--green); } .y { background: var(--yellow); } .b { background: var(--blue); }
+    .grid { display: grid; gap: 10px; }
+    .two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; }
+    label.f { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--mute); }
+    input {
+      font: inherit; font-size: 18px; width: 100%; min-width: 0; padding: 11px 10px;
+      border: 2px solid var(--green); border-radius: 10px; background: var(--green-bg); color: var(--ink);
+    }
+    input[type=date] { background: #fff; border-color: #cbd2d9; -webkit-appearance: none; appearance: none; display: block; box-sizing: border-box; min-width: 0; max-width: 100%; height: 52px; line-height: 1.2; text-align: left; }
+    input[type=date]::-webkit-date-and-time-value { text-align: left; min-height: 1.2em; }
+    input[type=text] { box-sizing: border-box; height: 52px; }
+    input.bad { border-color: var(--err); background: #fdeaea; }
+    input.warn { border-color: #f59e0b; background: #fff7e6; }
+    .coins { align-items: start; }
+    .coins > div:nth-child(odd) { padding-top: 13px; }
+    .ch { margin-top: 3px; font-size: 13px; color: var(--mute); }
+    .ch:empty { display: none; }
+    .ch.warn { color: #b45309; font-weight: 600; }
+    .tbl { display: grid; gap: 8px; align-items: center; margin-top: 4px; }
+    .t4 { grid-template-columns: 54px 1fr 1.3fr 1.3fr; }
+    .t3 { grid-template-columns: 54px 1.3fr 1.3fr; }
+    .t2 { grid-template-columns: 72px 1fr; }
+    .th { font-size: 13px; color: var(--mute); }
+    .r { text-align: right; font-variant-numeric: tabular-nums; }
+    .soll { text-align: center; color: var(--mute); }
+    .sum {
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+      margin-top: 12px; padding: 10px 12px; border-radius: 10px; font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .sum small { display: block; font-weight: 400; font-size: 13px; color: #3e4c59; }
+    .sum.neg span:last-child { color: var(--err); }
+    button {
+      font: inherit; font-size: 18px; font-weight: 600; min-height: 54px; padding: 0 20px;
+      border: 0; border-radius: 12px; color: #fff; background: #1a73e8;
+    }
+    button.sec { background: #e4e7eb; color: var(--ink); }
+    button:disabled { background: #9aa5b1; color: #fff; }
+    .msg { padding: 12px 14px; border-radius: 12px; font-size: 16px; line-height: 1.4; white-space: pre-line; word-break: break-word; }
+    .msg.err { background: #fde1e1; color: #8a1c1c; }
+    .msg.ok { background: #dff5e1; color: var(--ok); }
+    .msg.busy { background: #fff4d6; color: #7a5b00; }
+    .msg.warn { background: #ffe9c2; color: #6b3d00; }
+    .msg .acts { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    .msg .acts button { min-height: 44px; font-size: 16px; padding: 0 16px; }
+    .cl { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px solid #eceff1; font-variant-numeric: tabular-nums; }
+    .btns { display: flex; gap: 10px; margin-top: 14px; }
+    .btns button { flex: 1; }
+    [hidden] { display: none !important; }
+    .last { font-size: 14px; color: var(--mute); word-break: break-word; }
+    .seg { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .seg { flex-wrap: nowrap; }
+    .seg button { flex: 1 1 0; min-width: 0; padding: 0 6px; font-size: 16px; background: #e4e7eb; color: var(--ink); }
+    .seg button.on { background: #1a73e8; color: #fff; }
+    .seg button.on.minus, .seg button.on.plus { background: #b45309; }
+    .row2 { display: flex; gap: 10px; flex-wrap: wrap; }
+    .row2 button { flex: 1; min-width: 150px; }
+    .thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; margin-top: 12px; }
+    .thumbs:empty { display: none; }
+    .ph { position: relative; border: 1px solid #d5dae0; border-radius: 10px; overflow: hidden; background: #fff; }
+    .thumbs { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+    .ph { background: #e4e7eb; }
+    .ph img { display: block; width: 100%; height: 160px; object-fit: contain; cursor: zoom-in; }
+    .ph span { right: 6px; line-height: 1.25; background: rgba(0,0,0,.55); padding: 1px 5px; border-radius: 6px; text-shadow: none; }
+    #lightbox { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.92); display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 14px 12px calc(14px + env(safe-area-inset-bottom)); }
+    #lightbox img { flex: 1; min-height: 0; max-width: 100%; object-fit: contain; background: #fff; border-radius: 6px; }
+    #lbTitle { color: #fff; font-size: 15px; text-align: center; }
+    #lightbox .row2 { width: 100%; max-width: 560px; }
+    #lightbox .row2 button { min-width: 0; font-size: 16px; padding: 0 10px; }
+    #lightbox .row2 button.danger { background: #b3261e; }
+    #lightbox .row2 button { min-width: 120px; min-height: 48px; }
+    #lbEdit { flex: 1; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    #ceWrap { position: relative; line-height: 0; touch-action: none; user-select: none; -webkit-user-select: none; }
+    #lightbox #ceImg { flex: none; display: block; max-width: 100%; max-height: calc(100vh - 190px); border-radius: 0; }
+    #ceRect { position: absolute; border: 2px solid #fff; box-shadow: 0 0 0 9999px rgba(0,0,0,.6); touch-action: none; cursor: move; }
+    #ceRect i { position: absolute; width: 44px; height: 44px; margin: -22px 0 0 -22px; touch-action: none; }
+    #ceRect i::after { content: ''; position: absolute; inset: 12px; background: #fff; border: 3px solid #1a73e8; border-radius: 50%; }
+    #ceRect i[data-c=nw] { left: 0; top: 0; } #ceRect i[data-c=ne] { left: 100%; top: 0; }
+    #ceRect i[data-c=sw] { left: 0; top: 100%; } #ceRect i[data-c=se] { left: 100%; top: 100%; }
+    #saveCard button { width: 100%; }
+    #done { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 16px; overflow-y: auto; }
+    #done .dcard { background: #fff; border-radius: 20px; padding: 24px 20px 20px; width: 100%; max-width: 520px; box-shadow: 0 8px 30px rgba(0,0,0,.3); }
+    #doneIcon { width: 76px; height: 76px; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 700; color: #fff; background: #2e9e4f; }
+    #done.warn #doneIcon { background: #d97706; }
+    #doneTitle { text-align: center; font-size: 24px; margin: 0 0 14px; }
+    #doneList { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+    #doneList li { display: flex; gap: 10px; align-items: flex-start; line-height: 1.35; }
+    #doneList .ic { flex: none; width: 24px; height: 24px; border-radius: 50%; background: #dff5e1; color: #1b5e20; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+    #doneList li.w .ic { background: #ffe9c2; color: #8a4b00; }
+    #doneList small { display: block; color: var(--mute); font-size: 14px; word-break: break-word; }
+    #doneLink { display: block; text-align: center; margin: 0 0 14px; color: #1a5fd0; font-weight: 600; word-break: break-all; }
+    #done .btns { margin-top: 4px; }
+    #doneX { position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: #eef1f4; color: #364152; font-size: 24px; line-height: 1; padding: 0; cursor: pointer; }
+    #done .dcard { position: relative; }
+    #done.busy #doneIcon { background: transparent; border: 8px solid #dbe3ec; border-top-color: #1a73e8; font-size: 0; animation: spin 0.9s linear infinite; box-sizing: border-box; }
+    #done.busy .btns, #done.busy #doneX, #done.busy #doneLink { display: none; }
+    #doneList li.run .ic { background: #dbe8fd; color: #1a5fd0; }
+    #doneList li.wait { color: var(--mute); }
+    #doneList li.wait .ic { background: #eef1f4; color: var(--mute); }
+    #doneNote { text-align: center; color: var(--mute); font-size: 14px; margin: 0; }
+    #done:not(.busy) #doneNote { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .ph button { position: absolute; top: 4px; right: 4px; min-height: 32px; width: 32px; padding: 0; border-radius: 16px; font-size: 18px; background: rgba(0,0,0,.65); }
+    .ph span { position: absolute; left: 6px; bottom: 4px; font-size: 12px; color: #fff; text-shadow: 0 0 3px #000; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Zählprotokoll für Kassenabschluss</h1>
+
+  <div id="banner" class="msg err" hidden></div>
+  <div id="accessBanner" class="msg" hidden></div>
+  <div id="draftBanner" class="msg warn" hidden>
+    <span id="draftText"></span>
+    <div class="acts">
+      <button type="button" id="draftLoad">Entwurf laden</button>
+      <button type="button" class="sec" id="draftDrop">Verwerfen</button>
+    </div>
+  </div>
+
+  <section class="card">
+    <p class="hint">Trage in die grünen Felder die jeweiligen Tageswerte ein. Die daraus errechneten Werte in den gelben Feldern überträgst du während des Abschlusses in Tillhub. Die blauen Werte sind Zwischensummen, die du ggf. mit deiner eigenen Rechnung abgleichen kannst.</p>
+    <div class="legend">
+      <span class="chip g">Eingabe</span><span class="chip y">Werte für Abschluss</span><span class="chip b">Zwischensumme</span>
+    </div>
+    <div class="grid two" style="margin-top:14px">
+      <label class="f">Datum<input type="date" id="date"></label>
+      <label class="f">Mitarbeiter Theke<input type="text" id="name" autocomplete="off" autocapitalize="words" maxlength="60"></label>
+    </div>
+  </section>
+
+  <div id="sections" style="display:contents"></div>
+
+  <section class="card" id="resultCard">
+    <h2>Ergebnis</h2>
+    <div class="sum y"><span>Barbestand vor Barentnahme<small>Barbestand Soll – in Tillhub</small></span><span id="o_soll"></span></div>
+    <div class="sum y"><span>Barentnahme<small>in Tillhub</small></span><span id="o_entnahme"></span></div>
+    <div class="sum b" id="istRow"><span>Barbestand nach Barentnahme<small>Barbestand IST</small></span><span id="o_ist"></span></div>
+  </section>
+
+  <section class="card" id="diffCard" hidden>
+    <h2>Abgleich mit Tillhub</h2>
+    <p class="hint">Nachdem die gelben Werte in Tillhub eingetragen sind: Zeigt Tillhub eine Differenz?</p>
+    <div class="seg" id="diffSeg">
+      <button type="button" data-m="ok">Keine Differenz</button>
+      <button type="button" data-m="minus" class="minus">Fehlbetrag</button>
+      <button type="button" data-m="plus" class="plus">Überschuss</button>
+    </div>
+    <label class="f" id="diffAmt" hidden>Betrag der Differenz laut Tillhub
+      <input type="text" id="diff" inputmode="decimal" autocomplete="off" placeholder="0,00">
+    </label>
+    <div id="diffHint" class="ch"></div>
+  </section>
+
+  <section class="card" id="belegeCard">
+    <h2>EC-Belege</h2>
+    <p class="hint" id="belegeHint">Tagesabschluss-Belege der EC-Geräte fotografieren. Der Beleg wird automatisch erkannt, begradigt und zugeschnitten (Vorschau antippen zum Prüfen oder Zurückschalten). Mehrere Seiten sind möglich, sie werden als ein PDF abgelegt. Die Fotos werden nicht zwischengespeichert.</p>
+    <div class="row2">
+      <button type="button" id="btnCam">Beleg fotografieren</button>
+      <button type="button" class="sec" id="btnPick">Aus Fotos wählen</button>
+    </div>
+    <input type="file" id="cam" accept="image/*" capture="environment" hidden>
+    <input type="file" id="pick" accept="image/*" multiple hidden>
+    <div id="thumbs" class="thumbs"></div>
+    <div id="belegeInfo" class="ch"></div>
+  </section>
+
+  <section class="card" id="saveCard">
+    <button type="button" id="save">Speichern</button>
+  </section>
+
+  <section class="card" id="confirm" hidden>
+    <h2>Alles korrekt?</h2>
+    <div id="confirmList"></div>
+    <div id="confirmWarn" class="msg warn" style="margin-top:12px" hidden></div>
+    <div class="btns">
+      <button type="button" class="sec" id="back">Zurück</button>
+      <button type="button" id="go">Ja, speichern</button>
+    </div>
+  </section>
+
+  <div id="result" class="msg" hidden></div>
+
+  <section class="card">
+    <button type="button" class="sec" id="reset" style="width:100%">Alle Eingaben zurücksetzen</button>
+    <p class="last" style="margin:12px 0 0">Letzter Export: <span id="last">wird geladen …</span></p>
+  </section>
+</main>
+
+<div id="lightbox" hidden role="dialog" aria-label="Beleg-Vorschau">
+  <div id="lbTitle"></div>
+  <img id="lbImg" alt="Beleg-Vorschau">
+  <div id="lbEdit" hidden>
+    <div id="ceWrap">
+      <img id="ceImg" alt="Originalfoto" draggable="false">
+      <div id="ceRect"><i data-c="nw"></i><i data-c="ne"></i><i data-c="sw"></i><i data-c="se"></i></div>
+    </div>
+  </div>
+  <div class="row2" id="lbBtns">
+    <button type="button" id="lbRotL" class="sec" aria-label="90° nach links drehen">↺ Drehen</button>
+    <button type="button" id="lbRotR" class="sec" aria-label="90° nach rechts drehen">↻ Drehen</button>
+    <button type="button" id="lbCrop" class="sec">Original zeigen</button>
+    <button type="button" id="lbAdjust" class="sec">Ausschnitt ändern</button>
+    <button type="button" id="lbDel" class="danger">Entfernen</button>
+    <button type="button" id="lbClose">Fertig</button>
+  </div>
+  <div class="row2" id="lbEditBtns" hidden>
+    <button type="button" id="lbEditCancel" class="sec">Abbrechen</button>
+    <button type="button" id="lbEditOk">Übernehmen</button>
+  </div>
+</div>
+
+<div id="done" hidden role="dialog" aria-live="polite" aria-labelledby="doneTitle">
+  <div class="dcard">
+    <button type="button" id="doneX" aria-label="Schließen">×</button>
+    <div id="doneIcon">✓</div>
+    <h2 id="doneTitle">Alles gespeichert</h2>
+    <ul id="doneList"></ul>
+    <a id="doneLink" target="_blank" rel="noopener" hidden>Datei in Drive öffnen</a>
+    <p id="doneNote">Bitte warten und die Seite nicht schließen.</p>
+    <div class="btns">
+      <button type="button" class="sec" id="doneClose">Schließen</button>
+      <button type="button" id="doneNew">Neuer Abschluss</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var BILLS = [5, 10, 20, 50, 100];
+  var COINS = [200, 100, 50, 20, 10, 5, 2, 1];   // Cent
+  var DRAFT = 'zp_draft_v2', DRAFT_OLD = 'zp_draft_old_v2', NAME = 'zp_name_v1';
+  var MAXPHOTOS = 20, MAXEDGE = 1500, QUALITY = 0.7, MAXPDF = 9 * 1024 * 1024;
+  var init = { today: '', soll: [], tresor: 337, diffCheck: false, tol: 0, notify: false, belegePflicht: false };
+  var fields = {};          // key -> {el, count}
+  var photos = [], photoSeq = 0, belegeSavedKey = '', belegeId = '';
+  var diffMode = null;      // null | 'ok' | 'minus' | 'plus'
+  var exported = false;     // seit der letzten Änderung erfolgreich gespeichert
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function eur(v) {
+    return isFinite(v) ? v.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : '–';
+  }
+  function parse(raw, count) {
+    var s = String(raw || '').replace(/[\s€]/g, '');
+    if (!s) return 0;
+    if (count) return /^\d+$/.test(s) ? Number(s) : NaN;
+    if (s.indexOf(',') > -1) s = s.replace(/\./g, '').replace(',', '.');
+    if (!/^\d+(\.\d+)?$/.test(s)) return NaN;
+    return Math.round(Number(s) * 100) / 100;
+  }
+  function deDate(iso) { return String(iso || '').split('-').reverse().join('.'); }
+
+  // ---------- Aufbau ----------
+  function input(key, count) {
+    var i = document.createElement('input');
+    i.type = 'text';
+    i.inputMode = count ? 'numeric' : 'decimal';
+    i.autocomplete = 'off';
+    i.placeholder = count ? '0' : '0,00';
+    i.setAttribute('enterkeyhint', 'next');
+    i.addEventListener('input', onChange);
+    fields[key] = { el: i, count: count };
+    return i;
+  }
+  function lab(text, inp) {
+    var l = el('label', 'f', text);
+    l.appendChild(inp);
+    return l;
+  }
+  function section(title, hint) {
+    var c = el('section', 'card');
+    c.appendChild(el('h2', '', title));
+    if (hint) c.appendChild(el('p', 'hint', hint));
+    $('sections').appendChild(c);
+    return c;
+  }
+  function sumRow(cls, label, id) {
+    var r = el('div', 'sum ' + cls);
+    r.appendChild(el('span', '', label));
+    var s = el('span'); s.id = id;
+    r.appendChild(s);
+    return r;
+  }
+  function billTable(prefix, withSoll) {
+    var t = el('div', 'tbl ' + (withSoll ? 't4' : 't3'));
+    ['Wert'].concat(withSoll ? ['Soll', 'Ist (Anzahl)'] : ['Anzahl'], ['Betrag']).forEach(function (h) {
+      t.appendChild(el('div', 'th' + (h === 'Betrag' ? ' r' : ''), h));
+    });
+    BILLS.forEach(function (b) {
+      t.appendChild(el('div', '', b + ' €'));
+      if (withSoll) { var s = el('div', 'soll', '–'); s.id = 'soll_' + b; t.appendChild(s); }
+      t.appendChild(input(prefix + '_' + b, true));
+      var o = el('div', 'r'); o.id = 'b_' + prefix + '_' + b; t.appendChild(o);
+    });
+    return t;
+  }
+
+  function build() {
+    // Kartenterminals & Rechnungen
+    var c = section('Karten-Terminals & Rechnungen');
+    var g = el('div', 'grid two');
+    g.appendChild(lab('EC links (2481)', input('ec_links', false)));
+    g.appendChild(lab('EC rechts (2325)', input('ec_rechts', false)));
+    c.appendChild(g);
+    c.appendChild(sumRow('b', 'Summe EC', 'o_sumec'));
+    var g2 = el('div', 'grid'); g2.style.marginTop = '12px';
+    g2.appendChild(lab('Rechnungen', input('rechnungen', false)));
+    c.appendChild(g2);
+    c.appendChild(sumRow('b', 'Unbarer Umsatz', 'o_unbar'));
+
+    // Scheine in Kasse
+    c = section('Scheine in Kasse');
+    c.appendChild(billTable('ist', true));
+    c.appendChild(sumRow('b', 'Summe Scheine', 'o_scheine'));
+
+    // Kleingeld
+    c = section('Kleingeld', 'Pro Münzsorte den Gesamtbetrag in € eintragen.');
+    var t = el('div', 'tbl t2 coins');
+    COINS.forEach(function (cent) {
+      t.appendChild(el('div', '', eur(cent / 100)));
+      var w = el('div');
+      w.appendChild(input('klein_' + cent, false));
+      var h = el('div', 'ch'); h.id = 'h_klein_' + cent;
+      w.appendChild(h);
+      t.appendChild(w);
+    });
+    c.appendChild(t);
+    c.appendChild(sumRow('b', 'Summe Kleingeld', 'o_klein'));
+
+    // Tresor
+    c = section('Barbestand Wechselgeld Tresor');
+    var p = el('p', 'hint'); p.id = 'tresorText'; c.appendChild(p);
+    c.appendChild(sumRow('b', 'Summe', 'o_tresor'));
+
+    // Barentnahme
+    var cc = section('Barentnahme');
+    cc.appendChild(billTable('ent1', false));
+    cc.appendChild(sumRow('b', 'Summe Scheine', 'o_ent1'));
+  }
+
+  // ---------- Rechnen (gleiche Logik wie die Formeln im Blatt) ----------
+  function read() {
+    var v = {}, ok = true;
+    Object.keys(fields).forEach(function (k) {
+      var f = fields[k], x = parse(f.el.value, f.count), bad = isNaN(x);
+      f.el.classList.toggle('bad', bad);
+      if (bad) ok = false;
+      v[k] = x;
+    });
+    return { v: v, ok: ok };
+  }
+  function calc(v) {
+    var r2 = function (x) { return Math.round(x * 100) / 100; };
+    var bills = function (p) { return BILLS.reduce(function (s, b) { return s + b * v[p + '_' + b]; }, 0); };
+    var sumEC = v.ec_links + v.ec_rechts;
+    var unbar = sumEC + v.rechnungen;
+    var scheine = bills('ist');
+    var klein = COINS.reduce(function (s, c) { return s + v['klein_' + c]; }, 0);
+    var ent1 = bills('ent1');
+    var entnahme = ent1;
+    var soll = scheine + klein + init.tresor + entnahme;
+    var ist = soll - entnahme;
+    return { sumec: r2(sumEC), unbar: r2(unbar), scheine: r2(scheine), klein: r2(klein),
+             ent1: r2(ent1), soll: r2(soll), entnahme: r2(entnahme), ist: r2(ist) };
+  }
+  // Plausibilität Kleingeld: der Betrag muss ein Vielfaches der Münze sein
+  function coinCheck() {
+    var wrong = [];
+    COINS.forEach(function (cent) {
+      var f = fields['klein_' + cent], h = $('h_klein_' + cent);
+      var x = parse(f.el.value, false);
+      h.textContent = ''; h.className = 'ch'; f.el.classList.remove('warn');
+      if (isNaN(x) || x === 0) return;
+      var c = Math.round(x * 100);
+      if (c % cent === 0) {
+        h.textContent = '= ' + (c / cent) + ' Stück';
+      } else {
+        var lo = Math.floor(c / cent) * cent;
+        h.textContent = 'Kein Vielfaches von ' + eur(cent / 100) + ' – z. B. ' + eur(lo / 100) + ' oder ' + eur((lo + cent) / 100);
+        h.className = 'ch warn';
+        f.el.classList.add('warn');
+        wrong.push(eur(cent / 100));
+      }
+    });
+    return wrong;
+  }
+
+  // ---------- Differenz laut Tillhub ----------
+  // undefined = noch nicht gewählt, NaN = ungültig, sonst Zahl (mit Vorzeichen)
+  function diffValue() {
+    if (!init.diffCheck) return null;
+    if (diffMode === null) return undefined;
+    if (diffMode === 'ok') return 0;
+    var a = parse($('diff').value, false);
+    if (isNaN(a) || a === 0) return NaN;
+    return diffMode === 'minus' ? -a : a;
+  }
+  function isMismatch(dv) {
+    return typeof dv === 'number' && !isNaN(dv) && Math.abs(dv) > (Number(init.tol) || 0) + 0.0049;
+  }
+  function setDiffMode(m) {
+    diffMode = m;
+    var btns = $('diffSeg').querySelectorAll('button');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('on', btns[i].getAttribute('data-m') === m);
+    $('diffAmt').hidden = !(m === 'minus' || m === 'plus');
+  }
+  function updateDiffUi(dv) {
+    var h = $('diffHint');
+    h.className = 'ch';
+    h.textContent = '';
+    $('diff').classList.toggle('bad', diffMode !== null && diffMode !== 'ok' && $('diff').value !== '' && isNaN(parse($('diff').value, false)));
+    if (!init.diffCheck || dv === undefined || (typeof dv === 'number' && isNaN(dv))) return;
+    if (isMismatch(dv)) {
+      h.className = 'ch warn';
+      h.textContent = 'Der Abschluss geht nicht auf. Beim Speichern wird eine Kopie des Sheets statt des PDFs abgelegt' +
+        (init.notify ? ' und eine Meldung gesendet.' : '.');
+    } else {
+      h.textContent = 'Keine Differenz' + (dv !== 0 ? ' (innerhalb der Toleranz von ' + eur(init.tol) + ')' : '') + '. Es wird das PDF gespeichert.';
+    }
+  }
+
+  function update() {
+    var r = read(), t = calc(r.v);
+    var wrongCoins = coinCheck();
+    BILLS.forEach(function (b) {
+      ['ist', 'ent1'].forEach(function (p) {
+        var o = $('b_' + p + '_' + b);
+        if (o) o.textContent = eur(b * r.v[p + '_' + b]);
+      });
+    });
+    var set = function (id, val) { $(id).textContent = eur(val); };
+    set('o_sumec', t.sumec); set('o_unbar', t.unbar); set('o_scheine', t.scheine);
+    set('o_klein', t.klein); set('o_tresor', init.tresor);
+    set('o_ent1', t.ent1);
+    set('o_soll', t.soll); set('o_entnahme', t.entnahme); set('o_ist', t.ist);
+    $('istRow').classList.toggle('neg', isFinite(t.ist) && t.ist < 0);
+    var dv = diffValue();
+    updateDiffUi(dv);
+    return { read: r, totals: t, wrongCoins: wrongCoins, diff: dv };
+  }
+
+  // ---------- EC-Belege: Foto → verkleinern → PDF ----------
+  function enhance(g, w, h) {
+    // Graustufen + Kontrast strecken: kleinere Dateien, besser lesbare Thermo-Belege
+    var im = g.getImageData(0, 0, w, h), d = im.data, n = w * h, hist = new Uint32Array(256), i, y;
+    for (i = 0; i < n; i++) {
+      y = (d[4 * i] * 299 + d[4 * i + 1] * 587 + d[4 * i + 2] * 114) / 1000 | 0;
+      hist[y]++; d[4 * i] = y;
+    }
+    var lo = 0, hi = 255, acc = 0, t1 = n * 0.01, t2 = n * 0.99;
+    for (i = 0; i < 256; i++) { acc += hist[i]; if (acc >= t1) { lo = i; break; } }
+    acc = 0;
+    for (i = 0; i < 256; i++) { acc += hist[i]; if (acc >= t2) { hi = i; break; } }
+    if (hi - lo < 40) { lo = 0; hi = 255; }
+    var sc = 255 / (hi - lo);
+    for (i = 0; i < n; i++) {
+      y = (d[4 * i] - lo) * sc;
+      y = y < 0 ? 0 : (y > 255 ? 255 : y | 0);
+      d[4 * i] = d[4 * i + 1] = d[4 * i + 2] = y;
+    }
+    g.putImageData(im, 0, 0);
+  }
+  function dataUrlToBytes(u) {
+    var b = atob(u.split(',')[1]), a = new Uint8Array(b.length);
+    for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i);
+    return a;
+  }
+  // Beleg im Foto finden: helles Papier vor dunklerem Untergrund.
+  // Liefert {u0,u1,v0,v1,ang} (Rechteck im um ang gedrehten Koordinatensystem, in Bildpixeln) oder null.
+  function detectReceipt(img, w, h) {
+    var DS = 480, s = Math.min(1, DS / Math.max(w, h));
+    var sw = Math.max(8, Math.round(w * s)), sh = Math.max(8, Math.round(h * s));
+    var c = document.createElement('canvas'); c.width = sw; c.height = sh;
+    var g = c.getContext('2d');
+    g.drawImage(img, 0, 0, sw, sh);
+    var d = g.getImageData(0, 0, sw, sh).data, n = sw * sh, i, x, y;
+    // "Papier-Wert": hell UND neutral (Holz/Tisch sind hell, aber farbig → bekommen einen niedrigeren Wert)
+    var gray = new Uint8Array(n), r0, g0, b0, mxc, mnc, sc;
+    for (i = 0; i < n; i++) {
+      r0 = d[4 * i]; g0 = d[4 * i + 1]; b0 = d[4 * i + 2];
+      mxc = Math.max(r0, g0, b0); mnc = Math.min(r0, g0, b0);
+      sc = mxc - 1.5 * (mxc - mnc);
+      gray[i] = sc < 0 ? 0 : sc | 0;
+    }
+
+    // Text wegrechnen: Maximum-Filter (Dilatation), getrennt in x und y
+    var R = 3, tmp = new Uint8Array(n), f = new Uint8Array(n), m;
+    for (y = 0; y < sh; y++) for (x = 0; x < sw; x++) {
+      m = 0;
+      for (var k = Math.max(0, x - R); k <= Math.min(sw - 1, x + R); k++) if (gray[y * sw + k] > m) m = gray[y * sw + k];
+      tmp[y * sw + x] = m;
+    }
+    for (y = 0; y < sh; y++) for (x = 0; x < sw; x++) {
+      m = 0;
+      for (var q = Math.max(0, y - R); q <= Math.min(sh - 1, y + R); q++) if (tmp[q * sw + x] > m) m = tmp[q * sw + x];
+      f[y * sw + x] = m;
+    }
+
+    // Otsu-Schwelle
+    var hist = new Float64Array(256), sum = 0;
+    for (i = 0; i < n; i++) { hist[f[i]]++; sum += f[i]; }
+    var wB = 0, sB = 0, best = -1, thr = 128;
+    for (i = 0; i < 256; i++) {
+      wB += hist[i]; if (!wB) continue;
+      var wF = n - wB; if (!wF) break;
+      sB += i * hist[i];
+      var mB = sB / wB, mF = (sum - sB) / wF, v = wB * wF * (mB - mF) * (mB - mF);
+      if (v > best) { best = v; thr = i; }
+    }
+    if (best < 0) return null;
+    // Das Papier ist die hellste größere Fläche: Schwelle mindestens 72 % von deren Helligkeit,
+    // damit mittelhelle Unterlagen (graues Pad, Tisch) nicht mit zum Beleg zählen
+    var accum = 0, top = 255;
+    for (i = 255; i >= 0; i--) { accum += hist[i]; if (accum >= 0.02 * n) { top = i; break; } }
+    thr = Math.max(thr, Math.round(0.72 * top));
+
+    // größte helle Zusammenhangskomponente
+    var lab = new Int32Array(n), stack = new Int32Array(n), bestLab = 0, bestN = 0, cur = 0, sp, p, cnt, areas = [0];
+    for (i = 0; i < n; i++) {
+      if (f[i] <= thr || lab[i]) continue;
+      cur++; cnt = 0; sp = 0; stack[sp++] = i; lab[i] = cur;
+      while (sp) {
+        p = stack[--sp]; cnt++;
+        x = p % sw; y = (p - x) / sw;
+        if (x > 0 && !lab[p - 1] && f[p - 1] > thr) { lab[p - 1] = cur; stack[sp++] = p - 1; }
+        if (x < sw - 1 && !lab[p + 1] && f[p + 1] > thr) { lab[p + 1] = cur; stack[sp++] = p + 1; }
+        if (y > 0 && !lab[p - sw] && f[p - sw] > thr) { lab[p - sw] = cur; stack[sp++] = p - sw; }
+        if (y < sh - 1 && !lab[p + sw] && f[p + sw] > thr) { lab[p + sw] = cur; stack[sp++] = p + sw; }
+      }
+      areas[cur] = cnt;
+      if (cnt > bestN) { bestN = cnt; bestLab = cur; }
+    }
+    if (!bestLab || bestN < 0.04 * n) return null;
+
+    // mehrere Belege nebeneinander (z. B. links/rechts): alle größeren Flächen gemeinsam zuschneiden
+    var keep = new Uint8Array(cur + 1), keptN = 0, minArea = Math.max(0.3 * bestN, 0.01 * n);
+    for (i = 1; i <= cur; i++) if (areas[i] >= minArea) { keep[i] = 1; keptN += areas[i]; }
+
+    // Lage und Neigung (Hauptachse der Fläche)
+    var mx = 0, my = 0;
+    for (i = 0; i < n; i++) if (keep[lab[i]]) { mx += i % sw; my += (i / sw) | 0; }
+    mx /= keptN; my /= keptN;
+    var sxx = 0, syy = 0, sxy = 0, dx, dy;
+    for (i = 0; i < n; i++) if (keep[lab[i]]) { dx = i % sw - mx; dy = ((i / sw) | 0) - my; sxx += dx * dx; syy += dy * dy; sxy += dx * dy; }
+    sxx /= keptN; syy /= keptN; sxy /= keptN;
+    var tr = sxx + syy, det = sxx * syy - sxy * sxy, disc = Math.sqrt(Math.max(0, tr * tr / 4 - det));
+    var l1 = tr / 2 + disc, l2 = Math.max(1e-6, tr / 2 - disc);
+    var ang = 0, nkeep = 0;
+    for (i = 1; i <= cur; i++) if (keep[i]) nkeep++;
+    if (nkeep === 1 && Math.sqrt(l1 / l2) > 1.25) {                         // nur bei länglicher Form ist die Achse verlässlich
+      var th = 0.5 * Math.atan2(2 * sxy, sxx - syy);         // Richtung der Hauptachse
+      ang = th - Math.round(th / (Math.PI / 2)) * (Math.PI / 2);
+      if (Math.abs(ang) > 25 * Math.PI / 180) ang = 0;       // unplausibel → nicht drehen
+      if (Math.abs(ang) < 0.5 * Math.PI / 180) ang = 0;
+    }
+    var cu = Math.cos(ang), su = Math.sin(ang), u0 = 1e9, u1 = -1e9, v0 = 1e9, v1 = -1e9, u, vv;
+    for (i = 0; i < n; i++) {
+      if (!keep[lab[i]]) continue;
+      x = i % sw; y = (i / sw) | 0;
+      u = x * cu + y * su; vv = -x * su + y * cu;
+      if (u < u0) u0 = u; if (u > u1) u1 = u; if (vv < v0) v0 = vv; if (vv > v1) v1 = vv;
+    }
+    u0 += R; u1 -= R; v0 += R; v1 -= R;                      // Aufweitung durch den Maximum-Filter wieder abziehen
+    var pad = 0.008 * Math.max(u1 - u0, v1 - v0) + 1;        // schmaler Rand, damit nichts abgeschnitten wird
+    u0 -= pad; u1 += pad + 1; v0 -= pad; v1 += pad + 1;
+    var rw = u1 - u0, rh = v1 - v0;
+    if (rw * rh > 0.94 * n) return null;                     // füllt schon fast das ganze Bild → kein Zuschnitt nötig
+    if (rw < 0.08 * sw && rh < 0.08 * sh) return null;
+    return { u0: u0 / s, u1: u1 / s, v0: v0 / s, v1: v1 / s, ang: ang };
+  }
+
+  // Wie muss der Beleg gedreht werden, damit der Text aufrecht steht? Liefert 0, 90, 180 oder 270 (Grad im Uhrzeigersinn).
+  // Im Zweifel 0: eine falsche Drehung wäre schlimmer als keine (von Hand lässt sich in der Vorschau drehen).
+  // Grundlage: EC-Belege sind in Schrift mit festen Zeichenabständen gedruckt → die Zeichen stehen in senkrechten Spalten untereinander.
+  function detectRotation(c) {
+    var DS = 500, s = Math.min(1, DS / Math.max(c.width, c.height));
+    var w = Math.max(8, Math.round(c.width * s)), h = Math.max(8, Math.round(c.height * s));
+    var t = document.createElement('canvas'); t.width = w; t.height = h;
+    var g = t.getContext('2d'); g.drawImage(c, 0, 0, w, h);
+    var d = g.getImageData(0, 0, w, h).data, ink = new Uint8Array(w * h), n = 0, i, x, y, k, mm;
+    var info = { frac: 0, ratio: 0, rot: 0 };
+    window.__rotInfo = info;
+
+    // Schrift = dünne dunkle Striche, die beidseitig von hellem Papier umgeben sind (Holzmaserung, Ränder zählen nicht)
+    var gr = new Uint8Array(w * h), W4 = 4;
+    for (i = 0; i < w * h; i++) gr[i] = d[4 * i];
+    var lm = new Uint8Array(w * h), rm = new Uint8Array(w * h), um = new Uint8Array(w * h), dm = new Uint8Array(w * h);
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+      mm = 0; for (k = Math.max(0, x - W4); k < x; k++) if (gr[y * w + k] > mm) mm = gr[y * w + k]; lm[y * w + x] = mm;
+      mm = 0; for (k = x + 1; k <= Math.min(w - 1, x + W4); k++) if (gr[y * w + k] > mm) mm = gr[y * w + k]; rm[y * w + x] = mm;
+      mm = 0; for (k = Math.max(0, y - W4); k < y; k++) if (gr[k * w + x] > mm) mm = gr[k * w + x]; um[y * w + x] = mm;
+      mm = 0; for (k = y + 1; k <= Math.min(h - 1, y + W4); k++) if (gr[k * w + x] > mm) mm = gr[k * w + x]; dm[y * w + x] = mm;
+    }
+    var xs = [], ys = [];
+    for (i = 0; i < w * h; i++) {
+      if (gr[i] < 140 && ((lm[i] > 200 && rm[i] > 200) || (um[i] > 200 && dm[i] > 200))) { ink[i] = 1; n++; xs.push(i % w); ys.push((i / w) | 0); }
+    }
+    info.frac = n / (w * h);
+    if (info.frac < 0.008 || n < 300) return 0;               // kaum Text: nichts raten
+
+    // Schärfe der Projektionsprofile (mit Winkelsuche ±10°): wie "kammartig" liegen die Striche
+    //   hS: Zeilen waagerecht (Position quer zur Zeile), vS: Zeilen senkrecht
+    var hS = 0, vS = 0, deg, th, cs, sn, hv, hu, bh, bu, q, sh2, su2, vmin, umin;
+    var size = Math.ceil(Math.sqrt(w * w + h * h)) + 4;
+    for (deg = -10; deg <= 10; deg++) {
+      th = deg * Math.PI / 180; cs = Math.cos(th); sn = Math.sin(th);
+      hv = new Uint32Array(size); hu = new Uint32Array(size);
+      for (q = 0; q < n; q++) {
+        hv[Math.round(-xs[q] * sn + ys[q] * cs + size / 2) | 0]++;
+        hu[Math.round(xs[q] * cs + ys[q] * sn + size / 2) | 0]++;
+      }
+      sh2 = 0; su2 = 0;
+      for (q = 0; q < size; q++) { sh2 += hv[q] * hv[q]; su2 += hu[q] * hu[q]; }
+      if (sh2 > hS) hS = sh2;
+      if (su2 > vS) vS = su2;
+    }
+    info.ratio = hS / vS;                                     // < 1: Zeichenspalten dominieren → Text aufrecht, > 1: quer
+    var mass = function (arr) {
+      if (!arr.length) return 0;
+      var bins = {}, mx = 0;
+      arr.forEach(function (v) { var b = (v / 3) | 0; bins[b] = (bins[b] || 0) + 1; if (bins[b] > mx) mx = bins[b]; });
+      return mx / arr.length;
+    };
+
+    if (info.ratio >= 1.1) {                                  // Text steht quer
+      // Zeilenanfang (linksbündig, viele Zeilen beginnen an derselben Stelle) soll nach links
+      var tops = [], bots = [], first, last;
+      for (x = 0; x < w; x++) {
+        first = -1; last = -1;
+        for (y = 0; y < h; y++) if (ink[y * w + x]) { if (first < 0) first = y; last = y; }
+        if (first >= 0 && last - first >= 3) { tops.push(first); bots.push(last); }
+      }
+      if (tops.length < 8) return 0;
+      info.mTop = mass(tops); info.mBot = mass(bots);
+      info.rot = info.mTop > info.mBot ? 270 : 90;            // Anfang oben → gegen den Uhrzeigersinn, unten → im Uhrzeigersinn
+      return info.rot;
+    }
+    if (info.ratio <= 0.8) {                                  // aufrecht – oder auf dem Kopf?
+      var L = [], R = [];
+      for (y = 0; y < h; y++) {
+        first = -1; last = -1;
+        for (x = 0; x < w; x++) if (ink[y * w + x]) { if (first < 0) first = x; last = x; }
+        if (first >= 0 && last - first >= 3) { L.push(first); R.push(last); }
+      }
+      if (L.length >= 8) {
+        info.mL = mass(L); info.mR = mass(R);
+        if (Math.max(info.mL, info.mR) >= 0.25 && info.mR > 1.3 * info.mL) { info.rot = 180; return 180; }   // nur bei klarem Ergebnis umdrehen
+      }
+    }
+    return 0;
+  }
+  function rotateCanvas(c, rot) {
+    var w = c.width, h = c.height, o = document.createElement('canvas');
+    o.width = (rot === 90 || rot === 270) ? h : w; o.height = (rot === 90 || rot === 270) ? w : h;
+    var g = o.getContext('2d');
+    g.translate(o.width / 2, o.height / 2); g.rotate(rot * Math.PI / 180); g.drawImage(c, -w / 2, -h / 2);
+    return o;
+  }
+
+  // opt=true: Beleg erkennen, begradigen, zuschneiden; opt={x0,y0,x1,y1} (Anteile 0..1): manueller Ausschnitt;
+  // opt=false oder keine Erkennung: das ganze Foto
+  // rot: undefined = automatisch (Querlage erkennen), sonst fest 0/90/180/270 (Grad im Uhrzeigersinn)
+  function processImage(file, opt, rot) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        try {
+          var w = img.naturalWidth, h = img.naturalHeight;
+          if (!w || !h) throw new Error('Leeres Bild');
+          var box = null, manual = false;
+          if (opt && typeof opt === 'object') {
+            box = { u0: opt.x0 * w, u1: opt.x1 * w, v0: opt.y0 * h, v1: opt.y1 * h, ang: 0 };
+            manual = true;
+          } else if (opt) {
+            try { box = detectReceipt(img, w, h); } catch (e) { box = null; }
+          }
+          var srcW = box ? box.u1 - box.u0 : w, srcH = box ? box.v1 - box.v0 : h;
+          var s = Math.min(1, MAXEDGE / Math.max(srcW, srcH));
+          var cw = Math.max(1, Math.round(srcW * s)), ch = Math.max(1, Math.round(srcH * s));
+          var c = document.createElement('canvas');
+          c.width = cw; c.height = ch;
+          var g = c.getContext('2d');
+          g.fillStyle = '#fff'; g.fillRect(0, 0, cw, ch);
+          if (box) {
+            var eux = Math.cos(box.ang), euy = Math.sin(box.ang), evx = -euy, evy = eux;
+            var ox = box.u0 * eux + box.v0 * evx, oy = box.u0 * euy + box.v0 * evy;   // linke obere Ecke im Foto
+            g.setTransform(s * eux, s * evx, s * euy, s * evy,
+                           -s * (eux * ox + euy * oy), -s * (evx * ox + evy * oy));
+            g.drawImage(img, 0, 0);
+            g.setTransform(1, 0, 0, 1, 0, 0);
+          } else {
+            g.drawImage(img, 0, 0, cw, ch);
+          }
+          enhance(g, cw, ch);
+          var autoRot = false;
+          if (rot === undefined) { rot = detectRotation(c); autoRot = rot !== 0; }
+          var out = rot ? rotateCanvas(c, rot) : c;
+          var data = out.toDataURL('image/jpeg', QUALITY);
+          URL.revokeObjectURL(url);
+          resolve({ dataUrl: data, w: out.width, h: out.height, bytes: dataUrlToBytes(data), cropped: !!box, manual: manual,
+                    opt: opt, rot: rot, autoRot: autoRot, box: box, iw: w, ih: h, tilt: box ? Math.round(box.ang * 1800 / Math.PI) / 10 : 0 });
+        } catch (e) { URL.revokeObjectURL(url); reject(e); }
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('Datei ist kein lesbares Bild')); };
+      img.src = url;
+    });
+  }
+
+  // Minimaler PDF-Schreiber: eine A4-Seite pro Foto, JPEG unverändert eingebettet
+  function buildPdf(pages) {
+    var enc = new TextEncoder(), chunks = [], pos = 0, offs = [0];
+    function put(u8) { chunks.push(u8); pos += u8.length; }
+    function str(s) { put(enc.encode(s)); }
+    function pad10(n) { var s = String(n); while (s.length < 10) s = '0' + s; return s; }
+    put(new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 0x0a, 0x25, 0xe2, 0xe3, 0xcf, 0xd3, 0x0a]));
+    var n = pages.length, kids = [], i;
+    for (i = 0; i < n; i++) kids.push((3 + 3 * i) + ' 0 R');
+    offs[1] = pos; str('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+    offs[2] = pos; str('2 0 obj\n<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + n + ' >>\nendobj\n');
+    pages.forEach(function (p, k) {
+      var pn = 3 + 3 * k, cn = 4 + 3 * k, im = 5 + 3 * k;
+      var land = p.w > p.h, PW = land ? 841.89 : 595.28, PH = land ? 595.28 : 841.89, M = 24;
+      var s = Math.min((PW - 2 * M) / p.w, (PH - 2 * M) / p.h), dw = p.w * s, dh = p.h * s;
+      var x = (PW - dw) / 2, y = PH - M - dh;
+      var content = 'q ' + dw.toFixed(2) + ' 0 0 ' + dh.toFixed(2) + ' ' + x.toFixed(2) + ' ' + y.toFixed(2) + ' cm /Im0 Do Q';
+      offs[pn] = pos;
+      str(pn + ' 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + PW + ' ' + PH + '] /Resources << /XObject << /Im0 ' + im + ' 0 R >> >> /Contents ' + cn + ' 0 R >>\nendobj\n');
+      offs[cn] = pos;
+      str(cn + ' 0 obj\n<< /Length ' + content.length + ' >>\nstream\n' + content + '\nendstream\nendobj\n');
+      offs[im] = pos;
+      str(im + ' 0 obj\n<< /Type /XObject /Subtype /Image /Width ' + p.w + ' /Height ' + p.h +
+          ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + p.bytes.length + ' >>\nstream\n');
+      put(p.bytes);
+      str('\nendstream\nendobj\n');
+    });
+    var xrefPos = pos, total = 3 + 3 * n, x = 'xref\n0 ' + total + '\n0000000000 65535 f \n';
+    for (i = 1; i < total; i++) x += pad10(offs[i]) + ' 00000 n \n';
+    str(x + 'trailer\n<< /Size ' + total + ' /Root 1 0 R >>\nstartxref\n' + xrefPos + '\n%%EOF\n');
+    var out = new Uint8Array(pos), at = 0;
+    chunks.forEach(function (c) { out.set(c, at); at += c.length; });
+    return out;
+  }
+  function toBase64(u8) {
+    var s = '', CH = 0x8000;
+    for (var i = 0; i < u8.length; i += CH) s += String.fromCharCode.apply(null, u8.subarray(i, i + CH));
+    return btoa(s);
+  }
+  function photosKey() { return photos.map(function (p) { return p.id; }).join(','); }
+  function photoBytes() { return photos.reduce(function (s, p) { return s + p.bytes.length; }, 0); }
+  function kb(n) { return n >= 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.round(n / 1024) + ' KB'; }
+
+  function renderPhotos() {
+    var box = $('thumbs');
+    box.textContent = '';
+    photos.forEach(function (p, i) {
+      var w = el('div', 'ph');
+      var im = document.createElement('img');
+      im.src = p.dataUrl; im.alt = 'Beleg ' + (i + 1) + ' – antippen für große Ansicht';
+      im.onclick = function () { openLightbox(i); };
+      w.appendChild(im);
+      w.appendChild(el('span', '', 'Seite ' + (i + 1) + ' · ' + cropLabel(p)));
+      var x = el('button', '', '×');
+      x.type = 'button'; x.setAttribute('aria-label', 'Beleg ' + (i + 1) + ' entfernen');
+      x.onclick = function () { photos.splice(i, 1); renderPhotos(); onChange(); };
+      w.appendChild(x);
+      box.appendChild(w);
+    });
+    var info = $('belegeInfo');
+    info.className = 'ch';
+    if (!photos.length) { info.textContent = init.belegePflicht ? 'Pflicht: mindestens ein Beleg.' : ''; return; }
+    var total = photoBytes();
+    info.textContent = photos.length + (photos.length === 1 ? ' Seite' : ' Seiten') + ' · ca. ' + kb(total) + ' als PDF' +
+      (belegeSavedKey === photosKey() ? ' · bereits gespeichert' : '');
+    if (total > MAXPDF) { info.className = 'ch warn'; info.textContent += ' – zu groß, bitte einzelne Fotos entfernen.'; }
+  }
+  function cropLabel(p) {
+    var base = p.manual ? 'Ausschnitt angepasst' : (!p.crop ? 'Original' : (p.cropped ? 'zugeschnitten' : 'kein Rand erkannt'));
+    if (p.rot) base += ' · ' + (p.autoRot ? 'automatisch gedreht' : 'gedreht');
+    return base;
+  }
+  // Drehen um 90° (delta = 90 oder 270), Ausschnitt bleibt
+  function rotatePhoto(i, delta) {
+    var p = photos[i];
+    if (!p) return Promise.resolve();
+    var rot = ((p.rot || 0) + delta) % 360;
+    return processImage(p.file, p.opt, rot).then(function (r) {
+      r.id = ++photoSeq; r.file = p.file; r.crop = p.crop;
+      photos[i] = r;
+      renderPhotos(); onChange();
+    });
+  }
+  // Zuschnitt für ein Foto ein-/ausschalten (aus der Originaldatei neu berechnen)
+  function recrop(i, on) {
+    var p = photos[i];
+    if (!p) return Promise.resolve();
+    return processImage(p.file, on, p.rot).then(function (r) {
+      r.id = ++photoSeq; r.file = p.file; r.crop = on;
+      photos[i] = r;
+      renderPhotos(); onChange();
+    });
+  }
+  var lbIndex = -1;
+  function openLightbox(i) {
+    var p = photos[i];
+    if (!p) return;
+    lbIndex = i;
+    $('lbImg').src = p.dataUrl;
+    $('lbTitle').textContent = 'Seite ' + (i + 1) + ' von ' + photos.length + ' · ' + cropLabel(p) +
+      (p.cropped && p.tilt ? ' (um ' + String(Math.abs(p.tilt)).replace('.', ',') + '° gerade gedreht)' : '');
+    $('lbCrop').textContent = p.manual ? 'Automatisch' : (p.crop ? 'Original zeigen' : 'Zuschneiden');
+    setEditMode(false);
+    $('lightbox').hidden = false;
+  }
+  function closeLightbox() { setEditMode(false); $('lightbox').hidden = true; lbIndex = -1; }
+
+  // ---------- Ausschnitt von Hand anpassen ----------
+  var ce = { x0: 0.05, y0: 0.05, x1: 0.95, y1: 0.95, url: '' };
+  function setEditMode(on) {
+    $('lbImg').hidden = on; $('lbEdit').hidden = !on;
+    $('lbBtns').hidden = on; $('lbEditBtns').hidden = !on;
+    if (!on && ce.url) { try { URL.revokeObjectURL(ce.url); } catch (e) {} ce.url = ''; $('ceImg').removeAttribute('src'); }
+  }
+  function boxBounds(p) {                                  // umschließendes Rechteck (Anteile) des erkannten, ggf. gedrehten Ausschnitts
+    var b = p.box;
+    if (!b) return { x0: 0.06, y0: 0.06, x1: 0.94, y1: 0.94 };
+    var eux = Math.cos(b.ang), euy = Math.sin(b.ang), pts = [[b.u0, b.v0], [b.u1, b.v0], [b.u0, b.v1], [b.u1, b.v1]];
+    var xs = pts.map(function (q) { return q[0] * eux - q[1] * euy; }), ys = pts.map(function (q) { return q[0] * euy + q[1] * eux; });
+    var cl = function (v) { return Math.max(0, Math.min(1, v)); };
+    return { x0: cl(Math.min.apply(null, xs) / p.iw), x1: cl(Math.max.apply(null, xs) / p.iw),
+             y0: cl(Math.min.apply(null, ys) / p.ih), y1: cl(Math.max.apply(null, ys) / p.ih) };
+  }
+  function drawRect() {
+    var r = $('ceRect');
+    r.style.left = ce.x0 * 100 + '%'; r.style.top = ce.y0 * 100 + '%';
+    r.style.width = (ce.x1 - ce.x0) * 100 + '%'; r.style.height = (ce.y1 - ce.y0) * 100 + '%';
+  }
+  function openEditor() {
+    var p = photos[lbIndex];
+    if (!p) return;
+    var b = boxBounds(p);
+    ce.x0 = b.x0; ce.y0 = b.y0; ce.x1 = b.x1; ce.y1 = b.y1;
+    if (ce.url) { try { URL.revokeObjectURL(ce.url); } catch (e) {} }
+    ce.url = URL.createObjectURL(p.file);
+    $('ceImg').src = ce.url;
+    setEditMode(true);
+    $('lbTitle').textContent = 'Ausschnitt: Ecken oder Fläche ziehen';
+    drawRect();
+  }
+  (function () {
+    var drag = null, MIN = 0.06;
+    function pt(e) {
+      var r = $('ceWrap').getBoundingClientRect();
+      return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height };
+    }
+    var clamp = function (v) { return Math.max(0, Math.min(1, v)); };
+    $('ceRect').addEventListener('pointerdown', function (e) {
+      var h = e.target.getAttribute && e.target.getAttribute('data-c');
+      drag = { c: h || 'move', start: pt(e), r: { x0: ce.x0, y0: ce.y0, x1: ce.x1, y1: ce.y1 } };
+      try { this.setPointerCapture(e.pointerId); } catch (x) {}
+      e.preventDefault();
+    });
+    $('ceRect').addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      var q = pt(e), dx = q.x - drag.start.x, dy = q.y - drag.start.y, r = drag.r, c = drag.c;
+      if (c === 'move') {
+        var w = r.x1 - r.x0, hh = r.y1 - r.y0;
+        ce.x0 = Math.max(0, Math.min(1 - w, r.x0 + dx)); ce.y0 = Math.max(0, Math.min(1 - hh, r.y0 + dy));
+        ce.x1 = ce.x0 + w; ce.y1 = ce.y0 + hh;
+      } else {
+        if (c.indexOf('w') > -1) ce.x0 = Math.min(r.x1 - MIN, clamp(r.x0 + dx));
+        if (c.indexOf('e') > -1) ce.x1 = Math.max(r.x0 + MIN, clamp(r.x1 + dx));
+        if (c.indexOf('n') > -1) ce.y0 = Math.min(r.y1 - MIN, clamp(r.y0 + dy));
+        if (c.indexOf('s') > -1) ce.y1 = Math.max(r.y0 + MIN, clamp(r.y1 + dy));
+      }
+      drawRect();
+    });
+    var end = function () { drag = null; };
+    $('ceRect').addEventListener('pointerup', end);
+    $('ceRect').addEventListener('pointercancel', end);
+  })();
+  $('lbAdjust').onclick = openEditor;
+  function rotBtn(delta) {
+    return function () {
+      var i = lbIndex;
+      if (i < 0 || !photos[i]) return;
+      $('lbRotL').disabled = $('lbRotR').disabled = true;
+      rotatePhoto(i, delta).then(function () { $('lbRotL').disabled = $('lbRotR').disabled = false; openLightbox(i); },
+                                 function () { $('lbRotL').disabled = $('lbRotR').disabled = false; });
+    };
+  }
+  $('lbRotL').onclick = rotBtn(270);
+  $('lbRotR').onclick = rotBtn(90);
+  $('lbEditCancel').onclick = function () { openLightbox(lbIndex); };
+  $('lbEditOk').onclick = function () {
+    var i = lbIndex, p = photos[i];
+    if (!p) return;
+    $('lbEditOk').disabled = true;
+    processImage(p.file, { x0: ce.x0, y0: ce.y0, x1: ce.x1, y1: ce.y1 }, p.rot).then(function (r) {
+      r.id = ++photoSeq; r.file = p.file; r.crop = true;
+      photos[i] = r;
+      $('lbEditOk').disabled = false;
+      renderPhotos(); onChange(); openLightbox(i);
+    }, function () { $('lbEditOk').disabled = false; });
+  };
+  $('lbClose').onclick = closeLightbox;
+  $('lightbox').addEventListener('click', function (e) { if (e.target === $('lightbox')) closeLightbox(); });
+  $('lbCrop').onclick = function () {
+    var i = lbIndex, p = photos[i];
+    if (!p) return;
+    $('lbCrop').disabled = true;
+    recrop(i, p.manual ? true : !p.crop).then(function () { $('lbCrop').disabled = false; openLightbox(i); },
+                            function () { $('lbCrop').disabled = false; });
+  };
+  $('lbDel').onclick = function () {
+    if (lbIndex < 0) return;
+    photos.splice(lbIndex, 1); closeLightbox(); renderPhotos(); onChange();
+  };
+
+  function addFiles(list) {
+    var files = Array.prototype.slice.call(list || []);
+    if (!files.length) return;
+    var room = MAXPHOTOS - photos.length;
+    var note = '';
+    if (files.length > room) { files = files.slice(0, Math.max(room, 0)); note = 'Maximal ' + MAXPHOTOS + ' Seiten.'; }
+    var info = $('belegeInfo');
+    info.className = 'ch'; info.textContent = 'Foto wird verarbeitet …';
+    files.reduce(function (p, f) {
+      return p.then(function () {
+        var on = init.belegeCrop !== false;
+        return processImage(f, on).then(function (r) { r.id = ++photoSeq; r.file = f; r.crop = on; photos.push(r); renderPhotos(); });
+      });
+    }, Promise.resolve()).then(function () {
+      renderPhotos();
+      if (note) { info.className = 'ch warn'; info.textContent += ' ' + note; }
+      onChange();
+    }, function (e) {
+      renderPhotos();
+      info.className = 'ch warn';
+      info.textContent = 'Foto konnte nicht verarbeitet werden: ' + (e && e.message ? e.message : e);
+    });
+  }
+  $('btnCam').onclick = function () { $('cam').click(); };
+  $('btnPick').onclick = function () { $('pick').click(); };
+  $('cam').onchange = function () { var f = this.files; addFiles(f); this.value = ''; };
+  $('pick').onchange = function () { var f = this.files; addFiles(f); this.value = ''; };
+
+  // ---------- Entwurf (nur auf diesem Gerät) ----------
+  function snapshot() {
+    var d = { on: init.today, date: $('date').value, v: {}, dm: diffMode, da: $('diff').value };
+    Object.keys(fields).forEach(function (k) { d.v[k] = fields[k].el.value; });
+    return d;
+  }
+  function hasValues(d) {
+    if (!d) return false;
+    if (d.dm || d.da) return true;
+    return Object.keys(d.v || {}).some(function (k) { return String(d.v[k]).trim() !== ''; });
+  }
+  function hasAnyInput() { return hasValues(snapshot()) || photos.length > 0; }
+  function saveDraft() {
+    try {
+      localStorage.setItem(DRAFT, JSON.stringify(snapshot()));
+      localStorage.setItem(NAME, $('name').value);
+    } catch (e) { /* Speicher nicht verfügbar – egal */ }
+  }
+  function applyDraft(d) {
+    if (d.date) $('date').value = d.date;
+    Object.keys(d.v || {}).forEach(function (k) { if (fields[k]) fields[k].el.value = d.v[k]; });
+    $('diff').value = d.da || '';
+    setDiffMode(d.dm || null);
+  }
+  function clearDraft() { try { localStorage.removeItem(DRAFT); } catch (e) {} }
+  function loadDraft() {
+    try {
+      var n = localStorage.getItem(NAME);
+      if (n) $('name').value = n;
+      var d = JSON.parse(localStorage.getItem(DRAFT) || 'null');
+      if (d && hasValues(d) && d.on !== init.today) {          // Entwurf von einem früheren Tag sichern, nicht überschreiben
+        localStorage.setItem(DRAFT_OLD, JSON.stringify(d));
+        localStorage.removeItem(DRAFT);
+        d = null;
+      }
+      if (d && hasValues(d)) applyDraft(d);
+      var old = JSON.parse(localStorage.getItem(DRAFT_OLD) || 'null');
+      if (old && hasValues(old)) {
+        $('draftText').textContent = 'Ein Entwurf vom ' + deDate(old.date || old.on) +
+          ' wurde nicht gespeichert und liegt noch auf diesem Gerät.';
+        $('draftBanner').hidden = false;
+        $('draftLoad').onclick = function () {
+          applyDraft(old); $('draftBanner').hidden = true;
+          try { localStorage.removeItem(DRAFT_OLD); } catch (e) {}
+          onChange();
+        };
+        $('draftDrop').onclick = function () {
+          $('draftBanner').hidden = true;
+          try { localStorage.removeItem(DRAFT_OLD); } catch (e) {}
+        };
+      }
+    } catch (e) { /* ignorieren */ }
+  }
+
+  // Warnung beim Schließen/Neuladen mit ungespeicherten Eingaben (Best Effort: iPad-Safari zeigt sie nicht immer)
+  window.addEventListener('beforeunload', function (e) {
+    if (!exported && hasAnyInput()) {
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    }
+  });
+
+  function onChange() {
+    exported = false;
+    $('confirm').hidden = true;
+    update();
+    saveDraft();
+  }
+
+  // ---------- Aktionen ----------
+  function showResult(cls, text) {
+    var r = $('result');
+    r.className = 'msg ' + cls;
+    r.textContent = text;
+    r.hidden = false;
+    r.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function setBusy(b) { $('go').disabled = b; $('back').disabled = b; $('save').disabled = b; }
+
+  $('save').onclick = function () {
+    var u = update(), problems = [];
+    if (!u.read.ok) problems.push('Bitte die rot markierten Felder korrigieren.');
+    if (u.wrongCoins.length) problems.push('Kleingeld prüfen (' + u.wrongCoins.join(', ') + '): Der Betrag muss ein Vielfaches der Münze sein.');
+    if (!$('date').value) problems.push('Datum fehlt.');
+    if (!$('name').value.trim()) problems.push('Mitarbeiter fehlt.');
+    if (init.diffCheck && u.diff === undefined) problems.push('Bitte bei „Abgleich mit Tillhub“ angeben, ob der Abschluss aufgeht.');
+    if (init.diffCheck && typeof u.diff === 'number' && isNaN(u.diff)) problems.push('Bitte den Betrag der Differenz laut Tillhub eintragen.');
+    if (init.belegePflicht && !photos.length) problems.push('Bitte mindestens einen EC-Beleg fotografieren.');
+    if (photoBytes() > MAXPDF) problems.push('Die EC-Belege sind zu groß. Bitte einzelne Fotos entfernen.');
+    if (problems.length) { showResult('err', problems.join('\n')); return; }
+    $('result').hidden = true;
+
+    var t = u.totals, list = $('confirmList');
+    list.textContent = '';
+    var rows = [
+      ['Datum', deDate($('date').value)],
+      ['Mitarbeiter', $('name').value.trim()],
+      ['Unbarer Umsatz', eur(t.unbar)],
+      ['Barbestand vor Barentnahme (Tillhub)', eur(t.soll)],
+      ['Barentnahme (Tillhub)', eur(t.entnahme)],
+      ['Barbestand IST', eur(t.ist)]
+    ];
+    if (init.diffCheck) rows.push(['Differenz laut Tillhub', eur(u.diff)]);
+    rows.push(['EC-Belege', photos.length ? photos.length + (photos.length === 1 ? ' Seite' : ' Seiten') : 'keine']);
+    rows.forEach(function (row) {
+      var d = el('div', 'cl');
+      d.appendChild(el('span', '', row[0]));
+      d.appendChild(el('strong', '', row[1]));
+      list.appendChild(d);
+    });
+    var warn = $('confirmWarn');
+    if (isMismatch(u.diff)) {
+      warn.textContent = 'Der Abschluss geht nicht auf: Es wird kein PDF gespeichert, sondern eine Kopie des Sheets' +
+        (init.notify ? ' und eine Meldung gesendet.' : '.');
+      warn.hidden = false;
+      $('go').textContent = 'Ja, Kopie speichern';
+    } else {
+      warn.hidden = true;
+      $('go').textContent = 'Ja, PDF speichern';
+    }
+    $('confirm').hidden = false;
+    $('confirm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  $('back').onclick = function () { $('confirm').hidden = true; };
+
+  $('go').onclick = function () {
+    var u = update();
+    if (!u.read.ok || u.wrongCoins.length) return;
+    setBusy(true);
+    var date = $('date').value, name = $('name').value.trim();
+    var belegeMsg = '';
+    var needBelege = photos.length && belegeSavedKey !== photosKey();
+    var steps = (needBelege ? ['EC-Belege speichern'] : []).concat(['Zählprotokoll speichern und PDF erstellen']);
+    showBusy(steps, 0);
+
+    function fail(msg) {
+      setBusy(false); $('done').hidden = true;
+      showResult('err', '✖ ' + msg + (belegeMsg ? '\nEC-Belege sind bereits gespeichert und werden nicht doppelt abgelegt.' : '') +
+        '\nDeine Eingaben sind noch da. Mit „Speichern“ kannst du es erneut versuchen.');
+    }
+    function protocol() {
+      showResult('busy', 'Protokoll wird gespeichert … (das dauert einige Sekunden)');
+      showBusy(steps, steps.length - 1);
+      google.script.run
+        .withSuccessHandler(function (r) {
+          setBusy(false);
+          $('confirm').hidden = true;
+          if (r && r.ok) {
+            var extra = belegeMsg ? '\n✔ EC-Belege: ' + belegeMsg : '';
+            showResult(r.kind === 'kopie' ? 'warn' : 'ok',
+              (r.kind === 'kopie' ? '⚠ Abschluss geht nicht auf.\n' : '✔ PDF gespeichert:\n') + r.message + extra);
+            exported = true;
+            clearDraft();
+            var nPhotos = photos.length;
+            photos = []; belegeSavedKey = ''; belegeId = ''; renderPhotos();
+            refreshLast();
+            showDone(r, nPhotos, belegeMsg);
+          } else {
+            fail((r && r.message) || 'Unbekannter Fehler');
+          }
+        })
+        .withFailureHandler(function (e) { fail(e && e.message ? e.message : String(e)); })
+        .saveProtokoll({ date: date, name: name, v: u.read.v, diff: init.diffCheck ? u.diff : null,
+                        belegeId: photos.length && belegeSavedKey === photosKey() ? belegeId : '' });
+    }
+
+    setTimeout(function () {                     // erst zeichnen lassen, dann das schwere PDF bauen
+      if (needBelege) {
+        showResult('busy', 'EC-Belege werden gespeichert …');
+        var pdf;
+        try {
+          pdf = toBase64(buildPdf(photos));
+        } catch (e) {
+          setBusy(false); $('done').hidden = true;
+          showResult('err', '✖ Beleg-PDF konnte nicht erstellt werden: ' + (e && e.message ? e.message : e));
+          return;
+        }
+        google.script.run
+          .withSuccessHandler(function (b) {
+            if (b && b.ok) { belegeSavedKey = photosKey(); belegeId = b.id || ''; belegeMsg = b.message; renderPhotos(); protocol(); }
+            else {
+              setBusy(false); $('done').hidden = true;
+              showResult('err', '✖ EC-Belege nicht gespeichert (das Protokoll wurde noch nicht gespeichert):\n' + ((b && b.message) || 'Unbekannter Fehler') +
+                '\nDeine Eingaben und Fotos sind noch da. Mit „Speichern“ erneut versuchen.');
+            }
+          })
+          .withFailureHandler(function (e) {
+            setBusy(false); $('done').hidden = true;
+            showResult('err', '✖ EC-Belege nicht gespeichert: ' + (e && e.message ? e.message : e) +
+              '\nDeine Eingaben und Fotos sind noch da. Mit „Speichern“ erneut versuchen.');
+          })
+          .saveBelege({ date: date, pdf: pdf });
+      } else {
+        if (photos.length) belegeMsg = 'bereits gespeichert';
+        protocol();
+      }
+    }, 60);
+  };
+
+  var resetTimer = null;
+  $('reset').onclick = function () {
+    var b = $('reset');
+    if (!resetTimer) {
+      b.textContent = 'Wirklich alles löschen? Nochmal tippen';
+      resetTimer = setTimeout(function () { b.textContent = 'Alle Eingaben zurücksetzen'; resetTimer = null; }, 4000);
+      return;
+    }
+    clearTimeout(resetTimer); resetTimer = null;
+    b.textContent = 'Alle Eingaben zurücksetzen';
+    resetAll();
+  };
+  function resetAll() {
+    Object.keys(fields).forEach(function (k) { fields[k].el.value = ''; });
+    $('diff').value = ''; setDiffMode(null);
+    photos = []; belegeSavedKey = ''; belegeId = ''; renderPhotos();
+    $('date').value = init.today;
+    $('result').hidden = true; $('confirm').hidden = true;
+    clearDraft(); exported = false; update();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ---------- Erfolgsmeldung ----------
+  function addDone(text, sub, warn) {
+    var li = el('li', warn ? 'w' : '');
+    li.appendChild(el('span', 'ic', warn ? '!' : '✓'));
+    var d = el('div'); d.appendChild(document.createTextNode(text));
+    if (sub) d.appendChild(el('small', '', sub));
+    li.appendChild(d);
+    $('doneList').appendChild(li);
+  }
+  function showDone(r, nPhotos, belegeMsg) {
+    var copy = r.kind === 'kopie';
+    var lines = String(r.message || '').split('\n');
+    var detail = copy ? (lines[1] || '') : (lines[0] || '');
+    var rest = lines.slice(copy ? 2 : 1);
+    $('done').className = copy ? 'warn' : '';
+    $('doneIcon').textContent = copy ? '!' : '✓';
+    $('doneTitle').textContent = copy ? 'Gespeichert – Abschluss geht nicht auf' : 'Alles gespeichert';
+    $('doneList').textContent = '';
+    addDone(copy ? 'Kopie des Sheets gespeichert (kein PDF)' : 'Zählprotokoll als PDF gespeichert', detail, /⚠/.test(detail));
+    if (nPhotos) addDone('EC-Belege gespeichert (' + nPhotos + (nPhotos === 1 ? ' Seite)' : ' Seiten)'), String(belegeMsg || '').split('\n')[0], false);
+    rest.forEach(function (ln) {
+      ln = ln.trim();
+      if (!ln) return;
+      if (/^Meldung gesendet/.test(ln)) addDone(ln.replace(/\.$/, ''), '', false);
+      else addDone(ln.replace(/^⚠\s*/, ''), '', /⚠/.test(ln));
+    });
+    var a = $('doneLink');
+    if (r.url) { a.href = r.url; a.textContent = copy ? 'Kopie in Drive öffnen' : 'PDF in Drive öffnen'; a.hidden = false; } else { a.hidden = true; a.removeAttribute('href'); }
+    $('done').hidden = false;
+  }
+  // Fortschritts-Popup während des Speicherns: steps = Textliste, active = Index des laufenden Schritts
+  function showBusy(steps, active) {
+    $('done').className = 'busy';
+    $('doneIcon').textContent = '';
+    $('doneTitle').textContent = 'Wird gespeichert …';
+    $('doneList').textContent = '';
+    steps.forEach(function (t, i) {
+      var li = el('li', i < active ? '' : (i === active ? 'run' : 'wait'));
+      li.appendChild(el('span', 'ic', i < active ? '✓' : (i === active ? '…' : '·')));
+      li.appendChild(el('div', '', t));
+      $('doneList').appendChild(li);
+    });
+    $('doneLink').hidden = true;
+    $('done').hidden = false;
+  }
+  function closeAll() { $('done').hidden = true; $('result').hidden = true; $('confirm').hidden = true; }
+  $('doneClose').onclick = closeAll;
+  $('doneX').onclick = closeAll;
+  $('doneNew').onclick = function () { $('done').hidden = true; resetAll(); };
+
+  $('date').addEventListener('input', onChange);
+  $('name').addEventListener('input', onChange);
+  $('diff').addEventListener('input', onChange);
+  $('diffSeg').addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('button[data-m]') : null;
+    if (!b) return;
+    setDiffMode(b.getAttribute('data-m'));
+    onChange();
+  });
+
+  function refreshLast() {
+    google.script.run
+      .withSuccessHandler(function (d) { $('last').textContent = d.last || 'Noch kein Export.'; })
+      .getInitData();
+  }
+
+  function showAccess(a) {
+    if (!a || a.level === 'ok') return;
+    var b = $('accessBanner');
+    b.className = 'msg ' + (a.level === 'error' ? 'err' : 'warn');
+    b.textContent = (a.level === 'error' ? '✖ ' : '⚠ ') + a.message;
+    b.hidden = false;
+  }
+
+  // ---------- Start ----------
+  build();
+  renderPhotos();
+  update();
+  $('save').disabled = true;
+
+  google.script.run
+    .withSuccessHandler(function (d) {
+      init = d;
+      if (init.tresor === null || init.tresor === undefined) init.tresor = 337;
+      BILLS.forEach(function (b, i) {
+        var s = $('soll_' + b);
+        if (s) s.textContent = (d.soll && d.soll[i] !== null && d.soll[i] !== undefined) ? String(d.soll[i]) : '–';
+      });
+      $('tresorText').textContent = 'Im Tresor soll immer der gleiche Barwert (' + eur(init.tresor) +
+        ') liegen. Wenn ihr euch Wechselgeldrollen heraus holt, diese bitte immer gegen den passenden Betrag aus der Kasse austauschen.';
+      $('diffCard').hidden = !init.diffCheck;
+      if (init.belegePflicht) $('belegeHint').textContent += ' Pflicht: mindestens ein Beleg.';
+      $('date').value = init.today;
+      $('last').textContent = init.last || 'Noch kein Export.';
+      loadDraft();
+      renderPhotos();
+      update();
+      $('save').disabled = false;
+
+      // Zugriff auf den Zielordner gleich beim Öffnen prüfen, damit es nicht erst nach dem Zählen auffällt
+      google.script.run.withSuccessHandler(showAccess).withFailureHandler(function () {}).checkAccess();
+    })
+    .withFailureHandler(function (e) {
+      var b = $('banner');
+      b.textContent = 'Startdaten konnten nicht geladen werden: ' + (e && e.message ? e.message : e);
+      b.hidden = false;
+    })
+    .getInitData();
+})();
+</script>
+</body>
+</html>
