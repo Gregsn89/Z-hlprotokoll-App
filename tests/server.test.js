@@ -354,6 +354,16 @@ console.log('6. Ordnerstruktur');
   const e2 = build(); e2.setCfg('Fehlende Ordner anlegen', 'nein');
   const r = save(e2, basePayload());
   ok(!r.ok && /nicht gefunden in/.test(r.message), 'ohne Anlegen: klare Meldung', r.message);
+  // Windows-Schreibweise mit \ und vorangestelltem Root-Namen
+  const e3 = build();
+  e3.setCfg('Zielpfad', '01_Kasse\\Abschlüsse_{JJJJ}\\{MM}\\Zählprotokolle');
+  e3.setCfg('Belege-Pfad', '01_Kasse\\Abschlüsse_{JJJJ}\\{MM}\\EC-Belege');
+  const r3 = save(e3, basePayload());
+  ok(r3.ok && names(find(e3.root, 'Abschlüsse_2026/11/Zählprotokolle')).join() === '2026-11-12_Zählprotokoll.pdf', 'Backslash-Pfad mit Root-Namen: richtig verschachtelt', r3.message);
+  ok(!e3.root.folders.some(f => /\\/.test(f.name)) && e3.root.folders.length === 1 && e3.root.folders[0].name === 'Abschlüsse_2026', 'kein Ordner mit Backslash im Namen, kein doppelter Root-Ordner', e3.root.folders.map(f => f.name));
+  const e4 = build(); e4.setCfg('Zielpfad', 'Abschlüsse_{JJJJ}\\{MM}\\Zählprotokolle');
+  save(e4, basePayload());
+  ok(find(e4.root, 'Abschlüsse_2026/11/Zählprotokolle') && e4.root.folders.length === 1, 'Backslash ohne Root-Namen');
 }
 
 // ============ 7. EC-Belege ============

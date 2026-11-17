@@ -25,8 +25,8 @@ const DEFAULTS = [
   ['Datumszelle', '', 'z. B. K43. Leer = heutiges Datum (nur für Menü/Checkbox; die Web-App nutzt ihr Datumsfeld)'],
   ['Druckbereich', '', 'z. B. A1:K45. Leer = ganzes Blatt'],
   ['Ausrichtung', 'Hochformat', 'Hochformat | Querformat'],
-  ['Root-Ordner-ID', '', 'ID des Ordners 01_Kasse (aus der Drive-URL nach /folders/)'],
-  ['Zielpfad', 'Abschlüsse_{JJJJ}/{MM}/Zählprotokolle', 'Relativ zum Root. Platzhalter: {JJJJ} {MM} {TT}'],
+  ['Root-Ordner-ID', '', 'ID des Startordners (aus der Drive-URL nach /folders/). Die Pfade unten beginnen unterhalb dieses Ordners'],
+  ['Zielpfad', 'Abschlüsse_{JJJJ}/{MM}/Zählprotokolle', 'Relativ zum Root, Ordner mit / trennen (\\ geht auch). Platzhalter: {JJJJ} {MM} {TT}'],
   ['Zielordner-ID', '', 'Optional: direkte Ordner-ID, überschreibt Root-ID + Zielpfad'],
   ['Dateiname', '{JJJJ}-{MM}-{TT}_Zählprotokoll.pdf', 'Platzhalter: {JJJJ} {MM} {TT}'],
   ['Wenn Datei existiert', 'nummerieren', 'nummerieren (_2, _3 …) | ersetzen (alte Datei → Papierkorb)'],
@@ -926,8 +926,16 @@ function getFolder_(id, label) {
 
 const PATH_KEYS = { main: 'Zielpfad', diff: 'Differenz-Pfad', belege: 'Belege-Pfad' };
 
+/** Pfad in Ordnernamen zerlegen: „/“ und „\“ (Windows) gelten beide als Trenner */
 function pathParts_(tpl, ss, date) {
-  return fill_(tpl, ss, date).split('/').map(function (p) { return p.trim(); }).filter(Boolean);
+  return fill_(tpl, ss, date).split(/[\/\\]/).map(function (p) { return p.trim(); }).filter(Boolean);
+}
+
+/** Pfadteile relativ zum Root. Beginnt der Pfad mit dem Namen des Root-Ordners selbst (z. B. aus dem Explorer kopiert), wird dieser Teil übersprungen. */
+function relParts_(root, tpl, ss, date) {
+  const parts = pathParts_(tpl, ss, date);
+  if (parts.length && parts[0] === root.getName() && !root.getFoldersByName(parts[0]).hasNext()) parts.shift();
+  return parts;
 }
 
 /** Löst den Ordner auf (legt fehlende Ordner an, wenn erlaubt). kind: main | diff | belege */
@@ -944,7 +952,7 @@ function resolveFolder_(cfg, ss, date, kind) {
   let current = getFolder_(cfg['Root-Ordner-ID'], 'Root-Ordner-ID');
   const create = String(cfg['Fehlende Ordner anlegen']).toLowerCase() === 'ja';
 
-  pathParts_(cfg[key], ss, date).forEach(function (part) {
+  relParts_(current, cfg[key], ss, date).forEach(function (part) {
     const it = current.getFoldersByName(part);
     if (it.hasNext()) {
       current = it.next();
@@ -989,7 +997,7 @@ function probeTarget_(cfg, ss, date) {
   if (cfg['Zielordner-ID']) return { folder: getFolder_(cfg['Zielordner-ID'], 'Zielordner-ID'), missing: [] };
   if (!cfg['Root-Ordner-ID']) throw new Error('Weder Zielordner-ID noch Root-Ordner-ID in der Config.');
   let current = getFolder_(cfg['Root-Ordner-ID'], 'Root-Ordner-ID');
-  const parts = pathParts_(cfg['Zielpfad'], ss, date);
+  const parts = relParts_(current, cfg['Zielpfad'], ss, date);
   for (let i = 0; i < parts.length; i++) {
     const it = current.getFoldersByName(parts[i]);
     if (!it.hasNext()) return { folder: current, missing: parts.slice(i) };
