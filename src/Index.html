@@ -116,13 +116,17 @@
     #doneList small { display: block; color: var(--mute); font-size: 14px; word-break: break-word; }
     #doneLink { display: block; text-align: center; margin: 0 0 14px; color: #1a5fd0; font-weight: 600; word-break: break-all; }
     #done .btns { margin-top: 4px; }
-    #doneX { position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: #eef1f4; color: #364152; font-size: 24px; line-height: 1; padding: 0; cursor: pointer; }
     #done .dcard { position: relative; }
     #done.busy #doneIcon { background: transparent; border: 8px solid #dbe3ec; border-top-color: #1a73e8; font-size: 0; animation: spin 0.9s linear infinite; box-sizing: border-box; }
-    #done.busy .btns, #done.busy #doneX, #done.busy #doneLink { display: none; }
+    #done.busy .btns, #done.busy #doneLink { display: none; }
     #doneList li.run .ic { background: #dbe8fd; color: #1a5fd0; }
     #doneList li.wait { color: var(--mute); }
     #doneList li.wait .ic { background: #eef1f4; color: var(--mute); }
+    #closed { position: fixed; inset: 0; z-index: 70; background: var(--bg, #f1f3f5); display: flex; align-items: center; justify-content: center; padding: 16px; }
+    #closed .dcard { background: #fff; border-radius: 20px; padding: 28px 20px 20px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+    #closed h2 { font-size: 24px; margin: 0 0 8px; }
+    #closed p { margin: 0 0 18px; color: var(--mute); }
+    #closedIcon { width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 700; color: #fff; background: #2e9e4f; }
     #doneNote { text-align: center; color: var(--mute); font-size: 14px; margin: 0; }
     #done:not(.busy) #doneNote { display: none; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -172,7 +176,7 @@
       <button type="button" data-m="minus" class="minus">Fehlbetrag</button>
       <button type="button" data-m="plus" class="plus">Überschuss</button>
     </div>
-    <label class="f" id="diffAmt" hidden>Betrag der Differenz laut Tillhub
+    <label class="f" id="diffAmt" hidden><span id="diffAmtLbl">Differenz laut Tillhub</span>
       <input type="text" id="diff" inputmode="decimal" autocomplete="off" placeholder="0,00">
     </label>
     <div id="diffHint" class="ch"></div>
@@ -236,17 +240,24 @@
   </div>
 </div>
 
+<div id="closed" hidden>
+  <div class="dcard">
+    <div id="closedIcon">✓</div>
+    <h2>Fertig</h2>
+    <p>Der Abschluss ist gespeichert. Du kannst dieses Fenster jetzt schließen.</p>
+    <button type="button" class="sec" id="closedNew">Neuen Abschluss starten</button>
+  </div>
+</div>
+
 <div id="done" hidden role="dialog" aria-live="polite" aria-labelledby="doneTitle">
   <div class="dcard">
-    <button type="button" id="doneX" aria-label="Schließen">×</button>
     <div id="doneIcon">✓</div>
     <h2 id="doneTitle">Alles gespeichert</h2>
     <ul id="doneList"></ul>
     <a id="doneLink" target="_blank" rel="noopener" hidden>Datei in Drive öffnen</a>
     <p id="doneNote">Bitte warten und die Seite nicht schließen.</p>
     <div class="btns">
-      <button type="button" class="sec" id="doneClose">Schließen</button>
-      <button type="button" id="doneNew">Neuer Abschluss</button>
+      <button type="button" id="doneClose">Schließen</button>
     </div>
   </div>
 </div>
@@ -437,6 +448,8 @@
     var btns = $('diffSeg').querySelectorAll('button');
     for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('on', btns[i].getAttribute('data-m') === m);
     $('diffAmt').hidden = !(m === 'minus' || m === 'plus');
+    if (m === 'minus') $('diffAmtLbl').textContent = 'Negative Differenz laut Tillhub (Betrag eintragen)';
+    else if (m === 'plus') $('diffAmtLbl').textContent = 'Positive Differenz laut Tillhub (Betrag eintragen)';
   }
   function updateDiffUi(dv) {
     var h = $('diffHint');
@@ -1065,7 +1078,7 @@
     if (!$('date').value) problems.push('Datum fehlt.');
     if (!$('name').value.trim()) problems.push('Mitarbeiter fehlt.');
     if (init.diffCheck && u.diff === undefined) problems.push('Bitte bei „Abgleich mit Tillhub“ angeben, ob der Abschluss aufgeht.');
-    if (init.diffCheck && typeof u.diff === 'number' && isNaN(u.diff)) problems.push('Bitte den Betrag der Differenz laut Tillhub eintragen.');
+    if (init.diffCheck && typeof u.diff === 'number' && isNaN(u.diff)) problems.push('Bitte den Betrag der ' + (diffMode === 'plus' ? 'positiven' : 'negativen') + ' Differenz laut Tillhub eintragen.');
     if (init.belegePflicht && !photos.length) problems.push('Bitte mindestens einen EC-Beleg fotografieren.');
     if (photoBytes() > MAXPDF) problems.push('Die EC-Belege sind zu groß. Bitte einzelne Fotos entfernen.');
     if (problems.length) { showResult('err', problems.join('\n')); return; }
@@ -1246,10 +1259,19 @@
     $('doneLink').hidden = true;
     $('done').hidden = false;
   }
-  function closeAll() { $('done').hidden = true; $('result').hidden = true; $('confirm').hidden = true; }
-  $('doneClose').onclick = closeAll;
-  $('doneX').onclick = closeAll;
-  $('doneNew').onclick = function () { $('done').hidden = true; resetAll(); };
+  // „Schließen“: Formular leeren und das Fenster wirklich schließen. Browser erlauben window.close() nur
+  // bei von Skripten geöffneten Fenstern – sonst bleibt eine leere „Fertig“-Seite statt des Formulars.
+  function closeWindow() {
+    $('done').hidden = true; $('result').hidden = true; $('confirm').hidden = true;
+    resetAll();
+    try { window.close(); } catch (e) { /* weiter unten */ }
+    try { if (window.top && window.top !== window) window.top.close(); } catch (e) { /* anderer Ursprung */ }
+    setTimeout(function () {
+      $('closed').hidden = false;
+    }, 250);
+  }
+  $('doneClose').onclick = closeWindow;
+  $('closedNew').onclick = function () { $('closed').hidden = true; window.scrollTo(0, 0); };
 
   $('date').addEventListener('input', onChange);
   $('name').addEventListener('input', onChange);
