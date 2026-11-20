@@ -35,7 +35,7 @@ const DEFAULTS = [
   ['Status-Zelle', '', 'Optional: Zelle für die Statusmeldung nach dem Export (außerhalb des Druckbereichs)'],
   ['Letzter Export', '', 'Wird vom Skript gesetzt – nicht ändern'],
   // --- Abschluss geht nicht auf ---
-  ['Differenz-Prüfung', 'ja', 'ja | nein – Feld "Differenz laut Tillhub" im Formular. Bei Differenz: Kopie des Sheets statt PDF'],
+  ['Differenz-Prüfung', 'ja', 'ja | nein – Feld "Barbestand laut Tillhub" im Formular; die Differenz wird berechnet. Bei Differenz: Kopie des Sheets statt PDF'],
   ['Differenz-Toleranz', '0', 'Erlaubte Abweichung in € (z. B. 0,50). 0 = jede Differenz zählt'],
   ['Differenz-Pfad', 'Abschlüsse_{JJJJ}/{MM}/Differenzen', 'Ordner für die Kopie (relativ zum Root). Leer = Zielordner'],
   ['Kopie-Name', '{JJJJ}-{MM}-{TT}_Zählprotokoll_DIFFERENZ_{DIFF}', 'Name der Kopie. {DIFF} = Differenz, z. B. -12,50'],
@@ -376,6 +376,8 @@ function saveProtokoll(d) {
     const clean = cleanInput_(d, cfg);
     const tresor = readNum_(sheet, cells['tresor'], 337);
     const totals = calcTotals_(clean.v, tresor);
+    // Differenz wie in Tillhub: „Du berechnest“ (Barbestand vor Barentnahme laut Zählprotokoll) − „App berechnet“ (Barbestand laut Tillhub)
+    clean.diff = clean.tillhub === null ? null : Math.round((totals.soll - clean.tillhub) * 100) / 100;
     const beleg = belegLink_(d.belegeId);
     summary = { clean: clean, totals: totals, beleg: beleg };      // ab hier gelten Fehler als "Speichern fehlgeschlagen"
 
@@ -451,8 +453,8 @@ function dateLabel_(ss, date) {
 function summaryText_(ss, clean, totals) {
   return [
     'Datum: ' + dateLabel_(ss, clean.date),
-    'Barbestand SOLL: ' + fmtEur_(totals.soll),
-    'Barbestand IST: ' + fmtEur_(totals.ist),
+    'Barbestand SOLL (laut Tillhub): ' + (clean.tillhub !== null ? fmtEur_(clean.tillhub) : 'nicht angegeben'),
+    'Barbestand IST (laut Zählprotokoll): ' + fmtEur_(totals.soll),
     'Differenz: ' + (clean.diff !== null ? fmtEur_(clean.diff) : 'nicht angegeben'),
   ].join('\n');
 }
@@ -500,16 +502,16 @@ function cleanInput_(d, cfg) {
     v[key] = x;
   });
 
-  let diff = null;
+  let tillhub = null;
   if (cfg && diffCheckOn_(cfg)) {
-    if (d.diff === undefined || d.diff === null || d.diff === '') {
-      throw new Error('Bitte die Differenz laut Tillhub angeben (0, wenn der Abschluss aufgeht).');
+    if (d.tillhub === undefined || d.tillhub === null || d.tillhub === '') {
+      throw new Error('Bitte den Barbestand laut Tillhub ("App berechnet") angeben.');
     }
-    const x = Number(d.diff);
-    if (!isFinite(x) || Math.abs(x) > 1000000) throw new Error('Ungültige Differenz laut Tillhub.');
-    diff = Math.round(x * 100) / 100;
+    const x = Number(d.tillhub);
+    if (!isFinite(x) || x < 0 || x > 10000000) throw new Error('Ungültiger Barbestand laut Tillhub.');
+    tillhub = Math.round(x * 100) / 100;
   }
-  return { date: date, name: name, v: v, diff: diff };
+  return { date: date, name: name, v: v, tillhub: tillhub, diff: null };
 }
 
 /** Gleiche Rechenlogik wie die Formeln im Blatt (J7, J11, J17, J20, J29, J34, J37, J39, J41) */

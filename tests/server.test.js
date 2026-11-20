@@ -159,7 +159,20 @@ const basePayload = (over) => Object.assign({
   v: { ec_links: 100.5, ec_rechts: 20, rechnungen: 0, ist_5: 8, ist_10: 6, ist_20: 4, ist_50: 0, ist_100: 0,
     klein_200: 116, klein_100: 53, klein_50: 14.5, klein_20: 9.2, klein_10: 1.6, klein_5: 2.05, klein_2: 0.34, klein_1: 0.14,
     ent1_5: 0, ent1_10: 0, ent1_20: 7, ent1_50: 1, ent1_100: 1 } }, over || {});
-function save(env, payload) { env.ctx.__p = payload; return env.run('saveProtokoll(__p)'); }
+// Tests formulieren die Differenz (diff); die App bekommt den Barbestand laut Tillhub: tillhub = Soll(ZP) − diff
+function save(env, payload) {
+  if ('tillhub' in payload) { payload = Object.assign({}, payload); delete payload.diff; }
+  if ('diff' in payload) {
+    payload = Object.assign({}, payload);
+    const d = payload.diff; delete payload.diff;
+    if (typeof d === 'number') {
+      env.ctx.__p0 = payload;
+      const soll = env.run('calcTotals_(__p0.v, 337).soll');
+      payload.tillhub = Math.round((soll - d) * 100) / 100;
+    } else payload.tillhub = d;
+  }
+  env.ctx.__p = payload; return env.run('saveProtokoll(__p)');
+}
 function find(folder, path) { let c = folder; for (const p of path.split('/')) { c = c.folders.find(x => x.name === p); if (!c) return null; } return c; }
 const names = (f) => f ? f.files.map(x => x.name) : null;
 
@@ -214,7 +227,7 @@ console.log('2. Abschluss geht auf → PDF');
   const rm = save(em, basePayload());
   ok(rm.ok && rm.kind === 'pdf' && em.log.mails.length === 1 && /gespeichert/.test(em.log.mails[0].subject) && !/Differenz 0/.test(em.log.mails[0].subject), 'PDF-Fall: Mail bei jedem Abschluss', em.log.mails.map(m => m.subject));
   { const bd = em.log.mails[0].body;
-    ok(/Datum: /.test(bd) && !/Mitarbeiter|Laura/.test(bd) && /Barbestand SOLL/.test(bd) && /Barbestand IST/.test(bd) && /Differenz: /.test(bd) && /PDF: https:\/\/drive\//.test(bd) && /EC-Belege \(Scan\): keine/.test(bd) && !/Unbarer Umsatz|Barentnahme/.test(bd), 'PDF-Mail: Kerndaten + Links', bd); }
+    ok(/Datum: /.test(bd) && !/Mitarbeiter|Laura/.test(bd) && /Barbestand SOLL \(laut Tillhub\): /.test(bd) && /Barbestand IST \(laut Zählprotokoll\): /.test(bd) && /Differenz: /.test(bd) && /PDF: https:\/\/drive\//.test(bd) && /EC-Belege \(Scan\): keine/.test(bd) && !/Unbarer Umsatz|Barentnahme/.test(bd), 'PDF-Mail: Kerndaten + Links', bd); }
   ok(em.log.fetches.some(f => /slack/.test(f.url)) && /Meldung gesendet: E-Mail, Slack/.test(rm.message), 'PDF-Fall: auch Slack + Hinweis in der Antwort', rm.message);
   const en = build(); en.setCfg('E-Mail-Empfänger', 'a@x.de'); en.setCfg('Meldung bei jedem Abschluss', 'nein');
   save(en, basePayload());
@@ -245,7 +258,7 @@ console.log('3. Differenz → Kopie statt PDF');
   ok(/Differenz 7,30 €/.test(e2.log.mails[0].subject) && /Kopie des Sheets: https:\/\/drive\//.test(e2.log.mails[0].body) && !/Laura|Mitarbeiter/.test(e2.log.mails[0].body), 'Mail-Inhalt (Betrag, Link, kein Mitarbeiter)');
   ok(e2.log.mails[0].body.indexOf('Eingaben:') === -1 && e2.log.mails[0].body.indexOf('EC links') === -1, 'Differenz-Mail ohne Eingabenliste', e2.log.mails[0].body);
   { const bd = e2.log.mails[0].body;
-    ok(/Datum: \d\d\.\d\d\.\d{4}/.test(bd) && !/Mitarbeiter|Laura/.test(bd) && /Barbestand SOLL: /.test(bd) && /Barbestand IST: /.test(bd) && /Differenz: -?7,30|Differenz: 7,30/.test(bd.replace(/−/g, '-')), 'Mail zeigt Datum, SOLL, IST, Differenz (ohne Mitarbeiter)', bd);
+    ok(/Datum: \d\d\.\d\d\.\d{4}/.test(bd) && !/Mitarbeiter|Laura/.test(bd) && /Barbestand SOLL \(laut Tillhub\): /.test(bd) && /Barbestand IST \(laut Zählprotokoll\): /.test(bd) && /Differenz: -?7,30|Differenz: 7,30/.test(bd.replace(/−/g, '-')), 'Mail zeigt Datum, SOLL, IST, Differenz (ohne Mitarbeiter)', bd);
     ok(!/Unbarer Umsatz|Barentnahme|Tillhub:/.test(bd), 'keine weiteren Zahlen in der Mail', bd);
     ok((bd.match(/Differenz:/g) || []).length === 1, 'Differenz nur einmal in der Mail'); }
   ok(/EC-Belege \(Scan\): keine/.test(e2.log.mails[0].body), 'ohne Beleg: "keine"');
@@ -305,7 +318,7 @@ console.log('4. Toleranz / Schalter');
   }
   const e3 = build();
   const r3 = save(e3, basePayload({ diff: undefined }));
-  ok(!r3.ok && /Differenz laut Tillhub/.test(r3.message), 'Prüfung an, Differenz fehlt → abgelehnt', r3.message);
+  ok(!r3.ok && /Barbestand laut Tillhub/.test(r3.message), 'Prüfung an, Tillhub-Wert fehlt → abgelehnt', r3.message);
   ok(!save(e3, basePayload({ diff: 'abc' })).ok, 'Differenz Text → abgelehnt');
   ok(!save(e3, basePayload({ diff: 1e9 })).ok, 'absurde Differenz → abgelehnt');
   ok(e3.log.fetches.length === 0 && Object.keys(e3.proto.cells).indexOf('G7') === -1, 'abgelehnte Eingaben schreiben nichts ins Blatt');
@@ -344,6 +357,30 @@ console.log('5. Validierung');
 }
 
 // ============ 6. Ordner / Jahreswechsel ============
+console.log('5b. Barbestand laut Tillhub → Differenz');
+{
+  const e = build(); e.setCfg('E-Mail-Empfänger', 'a@x.de');
+  const soll = e.run('calcTotals_(' + JSON.stringify(basePayload().v) + ', 337).soll');
+  const r = save(e, basePayload({ tillhub: Math.round((soll + 70) * 100) / 100 }));   // Tillhub erwartet 70 € mehr
+  ok(r.ok && r.kind === 'kopie' && r.diff === -70, 'Tillhub 70 € höher → Differenz −70,00 (Fehlbetrag)', r);
+  const bd = e.log.mails[0].body;
+  const fmt = (x) => x.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' €';
+  ok(bd.includes('Barbestand SOLL (laut Tillhub): ' + fmt(soll + 70)) && bd.includes('Barbestand IST (laut Zählprotokoll): ' + fmt(soll)) && /Differenz: -70,00 €/.test(bd.replace(/−/g, '-')), 'Mail: SOLL = Tillhub, IST = Zählprotokoll, Differenz −70,00', bd);
+  ok(!/Barbestand nach|nach Barentnahme/.test(bd), 'kein Wert „nach Barentnahme“ in der Mail');
+  const e2 = build();
+  const r2 = save(e2, basePayload({ tillhub: Math.round((soll - 25.5) * 100) / 100 }));
+  ok(r2.diff === 25.5 && r2.kind === 'kopie', 'Tillhub niedriger → Überschuss +25,50', r2);
+  const e3 = build();
+  ok(save(e3, basePayload({ tillhub: soll })).kind === 'pdf', 'Tillhub = Zählprotokoll → PDF');
+  const e4 = build();
+  const m = save(e4, basePayload({ tillhub: '' }));
+  ok(!m.ok && /Barbestand laut Tillhub/.test(m.message), 'ohne Tillhub-Wert abgelehnt', m.message);
+  ok(!save(e4, basePayload({ tillhub: -5 })).ok && !save(e4, basePayload({ tillhub: 'x' })).ok, 'negativ/Text abgelehnt');
+  const e5 = build(); e5.setCfg('Differenz-Prüfung', 'nein');
+  const o = save(e5, basePayload({ tillhub: undefined }));
+  ok(o.ok && o.kind === 'pdf' && o.diff === null, 'Prüfung aus: kein Tillhub-Wert nötig', o);
+}
+
 console.log('6. Ordnerstruktur');
 {
   const e = build();

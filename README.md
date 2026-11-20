@@ -5,7 +5,7 @@ Google-Apps-Script-Web-App (Tablet) + Container-Skript im Google Sheet „Zählp
 ## Was sie tut
 - Formular für alle grünen Felder → schreibt ins Sheet → rechnet nach (`verifyTotals_`)
 - Geht der Abschluss auf: **ein A4-PDF** in Drive (Pfad aus `Config`)
-- „Differenz laut Tillhub“ ≠ 0 (über Toleranz): **Kopie des Sheets** statt PDF
+- Eingabe: „Barbestand laut Tillhub“ („App berechnet“); Differenz = Zählprotokoll − Tillhub wird berechnet. Differenz ≠ 0 (über Toleranz): **Kopie des Sheets** statt PDF
 - EC-Belege: Fotos → automatischer Zuschnitt/Drehung (Vorschau, manuell korrigierbar) → **ein PDF**
 - Mail/Slack bei jedem Abschluss (Datum, SOLL, IST, Differenz, Links), Fehler-Mail, Abend-Erinnerung
 - Zugriffsprüfung + Ausweichordner; Entwurf im Browser (localStorage)
