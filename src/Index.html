@@ -237,6 +237,7 @@
   <section class="card">
     <button type="button" class="sec" id="reset" style="width:100%">Alle Eingaben zurücksetzen</button>
     <p class="last" style="margin:12px 0 0">Letzter Export: <span id="last">wird geladen …</span></p>
+    <p class="last" id="ver" style="margin:4px 0 0"></p>
   </section>
 </main>
 
@@ -1191,6 +1192,17 @@
     }
   });
 
+  var CLIENT_VERSION = '1.7.0';       // bei jeder Auslieferung mit APP_VERSION in Code.gs anheben
+  function showVersion(d) {
+    var v = d && d.version, el = $('ver');
+    if (!el) return;
+    var dt = d && d.versionDate ? ' · ' + deDate(d.versionDate) : '';
+    el.textContent = 'Version ' + (v || '?') + dt;
+    if (v !== CLIENT_VERSION) {
+      el.textContent += ' – Achtung: Seite ' + CLIENT_VERSION + ', Script ' + (v || 'älter') + '. Bitte Code.gs und Index.html beide aktualisieren und neu bereitstellen.';
+      el.style.color = '#b45309'; el.style.fontWeight = '600';
+    }
+  }
   function onChange() {
     exported = false;
     $('confirm').hidden = true;
@@ -1456,6 +1468,7 @@
       if (init.belegePflicht) $('belegeHint').textContent += ' Pflicht: mindestens ein Beleg.';
       $('date').value = init.today;
       $('last').textContent = init.last || 'Noch kein Export.';
+      showVersion(init);
       loadDraft();
       renderPhotos();
       update();

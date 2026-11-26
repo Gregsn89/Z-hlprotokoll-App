@@ -45,7 +45,7 @@ const DEFAULTS = [
   ['Belege Pflicht', 'nein', 'ja | nein – ja = Speichern nur mit mindestens einem Beleg-Foto'],
   ['Beleg-Zuschnitt', 'ja', 'ja | nein – Beleg im Foto automatisch erkennen, begradigen und zuschneiden (in der App pro Foto umschaltbar)'],
   // --- Zugriff / Meldungen ---
-  ['Meldung bei jedem Abschluss', 'ja', 'ja | nein – ja = Mail/Slack bei jedem gespeicherten Abschluss (nicht nur bei Differenz). Empfänger siehe unten'],
+  ['Meldung bei jedem Abschluss', 'ja', 'ja | nein – ja = Mail/Slack bei jedem gespeicherten Abschluss (nicht nur bei Differenz). Nur bei Differenz zusätzlich @channel in Slack. Empfänger siehe unten'],
   ['Ausweich-Ordner-ID', '', 'Optional: Ordner, in den gespeichert wird, wenn der Zielordner nicht erreichbar ist'],
   ['E-Mail-Empfänger', '', 'Komma-getrennt. Leer = keine Mails. Gilt für Differenz, Fehler und Erinnerung'],
   ['Slack-Webhook', '', 'URL eines Incoming-Webhooks (https://hooks.slack.com/services/…). Leer = kein Slack. Nicht weitergeben!'],
@@ -247,12 +247,17 @@ function hasNotifyTarget_(cfg) {
   return parseRecipients_(cfg['E-Mail-Empfänger']).length > 0 || SLACK_RE.test(String(cfg['Slack-Webhook'] || ''));
 }
 
+/** Version der Auslieferung – bei jeder neuen Version hier UND in Index.html (CLIENT_VERSION) anheben */
+const APP_VERSION = '1.7.0';
+const APP_DATE = '2026-11-26';
+
 function slackEscape_(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-/** Sendet an alle eingetragenen Kanäle; wirft nie. Liefert {sent: [Kanäle], problems: [Texte]} */
-function notify_(cfg, subject, body) {
+/** Sendet an alle eingetragenen Kanäle; wirft nie. Liefert {sent: [Kanäle], problems: [Texte]}
+ *  opts.channel = true: Slack-Nachricht beginnt mit @channel */
+function notify_(cfg, subject, body, opts) {
   const out = { sent: [], problems: [] };
 
   const to = parseRecipients_(cfg['E-Mail-Empfänger']);
@@ -274,7 +279,7 @@ function notify_(cfg, subject, body) {
         const res = UrlFetchApp.fetch(hook, {
           method: 'post',
           contentType: 'application/json',
-          payload: JSON.stringify({ text: '*' + slackEscape_(subject) + '*\n' + slackEscape_(body) }),
+          payload: JSON.stringify({ text: (opts && opts.channel ? '<!channel> ' : '') + '*' + slackEscape_(subject) + '*\n' + slackEscape_(body) }),
           muteHttpExceptions: true,
         });
         if (res.getResponseCode() >= 300) out.problems.push('Slack: HTTP ' + res.getResponseCode());
@@ -357,6 +362,8 @@ function getInitData() {
     notify: hasNotifyTarget_(cfg),
     belegePflicht: String(cfg['Belege Pflicht']).toLowerCase() === 'ja',
     belegeCrop: String(cfg['Beleg-Zuschnitt']).toLowerCase() !== 'nein',
+    version: APP_VERSION,
+    versionDate: APP_DATE,
   };
 }
 
@@ -405,7 +412,8 @@ function saveProtokoll(d) {
         'Der Abschluss geht nicht auf. Es wurde kein PDF gespeichert, sondern eine Kopie des Sheets.\n\n' +
         summaryText_(ss, clean, totals) + '\n\n' +
         'Kopie des Sheets: ' + r.url + '\n' +
-        'EC-Belege (Scan): ' + (beleg || 'keine')));
+        'EC-Belege (Scan): ' + (beleg || 'keine'),
+        { channel: true }));          // nur bei Differenz: @channel in Slack
     } else if (r.ok && String(cfg['Meldung bei jedem Abschluss']).toLowerCase() !== 'nein') {
       note = notifyNote_(notify_(cfg,
         'Kassenabschluss ' + dateLabel_(ss, clean.date) + ': gespeichert' +
