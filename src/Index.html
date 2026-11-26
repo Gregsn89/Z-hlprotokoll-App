@@ -90,21 +90,38 @@
     .ph { background: #e4e7eb; }
     .ph img { display: block; width: 100%; height: 160px; object-fit: contain; cursor: zoom-in; }
     .ph span { right: 6px; line-height: 1.25; background: rgba(0,0,0,.55); padding: 1px 5px; border-radius: 6px; text-shadow: none; }
-    #lightbox { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.92); display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 14px 12px calc(14px + env(safe-area-inset-bottom)); }
-    #lightbox img { flex: 1; min-height: 0; max-width: 100%; object-fit: contain; background: #fff; border-radius: 6px; }
-    #lbTitle { color: #fff; font-size: 15px; text-align: center; }
-    #lightbox .row2 { width: 100%; max-width: 560px; }
-    #lightbox .row2 button { min-width: 0; font-size: 16px; padding: 0 10px; }
-    #lightbox .row2 button.danger { background: #b3261e; }
-    #lightbox .row2 button { min-width: 120px; min-height: 48px; }
-    #lbEdit { flex: 1; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    #rv, #ed { position: fixed; inset: 0; z-index: 50; background: #111; color: #fff; display: flex; flex-direction: column; gap: 10px; padding: 12px 12px calc(12px + env(safe-area-inset-bottom)); }
+    #rvHead, #edHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 17px; }
+    #rvX { min-height: 44px; width: 44px; padding: 0; font-size: 26px; background: #333; border-radius: 22px; }
+    #rvList { font-size: 14px; line-height: 1.35; background: #26303b; border-radius: 10px; padding: 8px 12px; }
+    #rvList ul { margin: 4px 0 0; padding-left: 20px; }
+    #rvScroll { flex: 1; min-height: 0; overflow: auto; display: flex; background: #333; border-radius: 8px; -webkit-overflow-scrolling: touch; }
+    #rvPage { position: relative; flex: none; margin: auto; background: #fff; box-shadow: 0 2px 14px rgba(0,0,0,.6); }
+    #rvBox { position: absolute; }
+    #rvImg { display: block; width: 100%; height: 100%; object-fit: contain; object-position: top center; }
+    #rvInfo { font-size: 14px; color: #c9d1d9; text-align: center; min-height: 18px; }
+    #rv .row2, #ed .row2 { width: 100%; max-width: 640px; margin: 0 auto; }
+    #rv .row2 button, #ed .row2 button { min-width: 0; min-height: 50px; font-size: 16px; padding: 0 10px; }
+    #rv button.danger { background: #b3261e; }
+    #rv button.good, #ed button.good { background: #2e9e4f; font-size: 19px; }
+    #rv button.sec, #ed button.sec { background: #3a4450; color: #fff; }
+    #edStage { flex: 1; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #333; border-radius: 8px; }
     #ceWrap { position: relative; line-height: 0; touch-action: none; user-select: none; -webkit-user-select: none; }
-    #lightbox #ceImg { flex: none; display: block; max-width: 100%; max-height: calc(100vh - 190px); border-radius: 0; }
+    #edCv { display: block; max-width: 100%; max-height: calc(100vh - 290px); max-height: calc(100dvh - 290px); }
+    #edCtl { width: 100%; max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 6px; }
+    #edCtl .angrow { display: flex; gap: 8px; align-items: center; }
+    #edCtl .angrow button { flex: none; min-width: 52px; min-height: 48px; padding: 0 8px; font-size: 17px; }
+    #edAng { flex: 1; min-width: 0; height: 40px; accent-color: #4d9bff; }
+    #edAngTxt { text-align: center; font-size: 15px; color: #c9d1d9; }
+    #edHelp { font-size: 13px; color: #aab4be; text-align: center; }
     #ceRect { position: absolute; border: 2px solid #fff; box-shadow: 0 0 0 9999px rgba(0,0,0,.6); touch-action: none; cursor: move; }
     #ceRect i { position: absolute; width: 44px; height: 44px; margin: -22px 0 0 -22px; touch-action: none; }
     #ceRect i::after { content: ''; position: absolute; inset: 12px; background: #fff; border: 3px solid #1a73e8; border-radius: 50%; }
     #ceRect i[data-c=nw] { left: 0; top: 0; } #ceRect i[data-c=ne] { left: 100%; top: 0; }
     #ceRect i[data-c=sw] { left: 0; top: 100%; } #ceRect i[data-c=se] { left: 100%; top: 100%; }
+    .ph.ok span { background: #1f7a3a; text-shadow: none; }
+    .ph.todo { border-color: #d97706; border-width: 2px; }
+    .ph.todo span { background: #b45309; text-shadow: none; }
     #saveCard button { width: 100%; }
     #done { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 16px; overflow-y: auto; }
     #done .dcard { background: #fff; border-radius: 20px; padding: 24px 20px 20px; width: 100%; max-width: 520px; box-shadow: 0 8px 30px rgba(0,0,0,.3); }
@@ -190,7 +207,7 @@
 
   <section class="card" id="belegeCard">
     <h2>EC-Belege</h2>
-    <p class="hint" id="belegeHint">Tagesabschluss-Belege der EC-Geräte fotografieren. Der Beleg wird automatisch erkannt, begradigt und zugeschnitten (Vorschau antippen zum Prüfen oder Zurückschalten). Mehrere Seiten sind möglich, sie werden als ein PDF abgelegt. Die Fotos werden nicht zwischengespeichert.</p>
+    <p class="hint" id="belegeHint">Fotografiere den kompletten Beleg-Stapel auf einem Foto: <b>beide EC-Kassenschnitte, den Tillhub-Kassenabschluss und die Barauszahlungsbelege</b>. Das Foto wird automatisch zugeschnitten und gedreht; danach siehst du die Seite im Vollbild und bestätigst sie mit „Alles drauf und lesbar“ – oder passt Ausschnitt und Drehwinkel an. Mehrere Seiten sind möglich, sie werden als ein PDF abgelegt. Die Fotos werden nicht zwischengespeichert.</p>
     <div class="row2">
       <button type="button" id="btnCam">Beleg fotografieren</button>
       <button type="button" class="sec" id="btnPick">Aus Fotos wählen</button>
@@ -223,26 +240,46 @@
   </section>
 </main>
 
-<div id="lightbox" hidden role="dialog" aria-label="Beleg-Vorschau">
-  <div id="lbTitle"></div>
-  <img id="lbImg" alt="Beleg-Vorschau">
-  <div id="lbEdit" hidden>
+<div id="rv" hidden role="dialog" aria-label="Beleg-Scan prüfen">
+  <div id="rvHead"><b id="rvTitle"></b><button type="button" id="rvX" aria-label="Schließen">×</button></div>
+  <div id="rvList"><b>Auf dem Scan müssen zu sehen sein:</b>
+    <ul><li>beide EC-Kassenschnitte (Tagesabschluss)</li><li>der Tillhub-Kassenabschluss</li><li>die Barauszahlungsbelege</li></ul>
+  </div>
+  <div id="rvScroll"><div id="rvPage"><div id="rvBox"><img id="rvImg" alt="So wird die Seite im PDF aussehen"></div></div></div>
+  <div id="rvInfo"></div>
+  <div class="row2"><button type="button" id="rvOk" class="good">✓ Alles drauf und lesbar</button></div>
+  <div class="row2">
+    <button type="button" id="rvAdj" class="sec">Anpassen</button>
+    <button type="button" id="rvZoom" class="sec">Zoom</button>
+    <button type="button" id="rvDel" class="danger">Löschen</button>
+  </div>
+</div>
+
+<div id="ed" hidden role="dialog" aria-label="Scan anpassen">
+  <div id="edHead"><b>Scan anpassen</b><span id="edHelp">Erst drehen, dann den Ausschnitt ziehen</span></div>
+  <div id="edStage">
     <div id="ceWrap">
-      <img id="ceImg" alt="Originalfoto" draggable="false">
+      <canvas id="edCv"></canvas>
       <div id="ceRect"><i data-c="nw"></i><i data-c="ne"></i><i data-c="sw"></i><i data-c="se"></i></div>
     </div>
   </div>
-  <div class="row2" id="lbBtns">
-    <button type="button" id="lbRotL" class="sec" aria-label="90° nach links drehen">↺ Drehen</button>
-    <button type="button" id="lbRotR" class="sec" aria-label="90° nach rechts drehen">↻ Drehen</button>
-    <button type="button" id="lbCrop" class="sec">Original zeigen</button>
-    <button type="button" id="lbAdjust" class="sec">Ausschnitt ändern</button>
-    <button type="button" id="lbDel" class="danger">Entfernen</button>
-    <button type="button" id="lbClose">Fertig</button>
+  <div id="edCtl">
+    <div class="angrow">
+      <button type="button" id="edL" class="sec" aria-label="90° nach links drehen">↺ 90°</button>
+      <button type="button" id="edM" class="sec" aria-label="0,5° nach links">−</button>
+      <input type="range" id="edAng" min="-45" max="45" step="0.5" value="0" aria-label="Drehwinkel fein">
+      <button type="button" id="edP" class="sec" aria-label="0,5° nach rechts">+</button>
+      <button type="button" id="edR" class="sec" aria-label="90° nach rechts drehen">↻ 90°</button>
+    </div>
+    <div id="edAngTxt"></div>
   </div>
-  <div class="row2" id="lbEditBtns" hidden>
-    <button type="button" id="lbEditCancel" class="sec">Abbrechen</button>
-    <button type="button" id="lbEditOk">Übernehmen</button>
+  <div class="row2">
+    <button type="button" id="edAuto" class="sec">Automatisch</button>
+    <button type="button" id="edFull" class="sec">Ganzes Foto</button>
+  </div>
+  <div class="row2">
+    <button type="button" id="edCancel" class="sec">Abbrechen</button>
+    <button type="button" id="edOk">Übernehmen</button>
   </div>
 </div>
 
@@ -624,7 +661,7 @@
       if (u < u0) u0 = u; if (u > u1) u1 = u; if (vv < v0) v0 = vv; if (vv > v1) v1 = vv;
     }
     u0 += R; u1 -= R; v0 += R; v1 -= R;                      // Aufweitung durch den Maximum-Filter wieder abziehen
-    var pad = 0.008 * Math.max(u1 - u0, v1 - v0) + 1;        // schmaler Rand, damit nichts abgeschnitten wird
+    var pad = (nkeep >= 2 ? 0.035 : 0.008) * Math.max(u1 - u0, v1 - v0) + 1;   // Rand: bei mehreren Belegen großzügiger (dunklere Bons werden sonst angeschnitten)
     u0 -= pad; u1 += pad + 1; v0 -= pad; v1 += pad + 1;
     var rw = u1 - u0, rh = v1 - v0;
     if (rw * rh > 0.94 * n) return null;                     // füllt schon fast das ganze Bild → kein Zuschnitt nötig
@@ -720,48 +757,77 @@
     return o;
   }
 
-  // opt=true: Beleg erkennen, begradigen, zuschneiden; opt={x0,y0,x1,y1} (Anteile 0..1): manueller Ausschnitt;
-  // opt=false oder keine Erkennung: das ganze Foto
-  // rot: undefined = automatisch (Querlage erkennen), sonst fest 0/90/180/270 (Grad im Uhrzeigersinn)
-  function processImage(file, opt, rot) {
+  // Geometrie: Foto (W×H) um thetaDeg (Grad, im Uhrzeigersinn) drehen; das gedrehte Bild ist RW×RH groß (umschließendes Rechteck)
+  function rotGeom(W, H, thetaDeg) {
+    var t = thetaDeg * Math.PI / 180, co = Math.cos(t), si = Math.sin(t);
+    var RW = Math.abs(W * co) + Math.abs(H * si), RH = Math.abs(W * si) + Math.abs(H * co);
+    return { co: co, si: si, RW: RW, RH: RH, tx: RW / 2 - (W / 2) * co + (H / 2) * si, ty: RH / 2 - (W / 2) * si - (H / 2) * co };
+  }
+  function mapPt(G, x, y) { return { X: G.co * x - G.si * y + G.tx, Y: G.si * x + G.co * y + G.ty }; }
+  // Erkannten Beleg-Rahmen (box im Foto, um ang gedreht) als Rechteck (Anteile) im um theta gedrehten Foto
+  function boxRect(box, iw, ih, theta) {
+    if (!box) return { x0: 0, y0: 0, x1: 1, y1: 1 };
+    var G = rotGeom(iw, ih, theta), co = Math.cos(box.ang), si = Math.sin(box.ang), xs = [], ys = [];
+    [[box.u0, box.v0], [box.u1, box.v0], [box.u0, box.v1], [box.u1, box.v1]].forEach(function (q) {
+      var m = mapPt(G, q[0] * co - q[1] * si, q[0] * si + q[1] * co);
+      xs.push(m.X / G.RW); ys.push(m.Y / G.RH);
+    });
+    var cl = function (v) { return Math.max(0, Math.min(1, v)); };
+    return { x0: cl(Math.min.apply(null, xs)), x1: cl(Math.max.apply(null, xs)), y0: cl(Math.min.apply(null, ys)), y1: cl(Math.max.apply(null, ys)) };
+  }
+
+  // opt=true: Beleg erkennen, begradigen, zuschneiden, Querlage erkennen; opt=false: das ganze Foto (Querlage wird trotzdem erkannt);
+  // opt={theta,x0,y0,x1,y1}: von Hand – das Foto wird um theta (Grad, im Uhrzeigersinn, frei wählbar) gedreht und dann
+  // auf das Rechteck (Anteile 0..1 des gedrehten Fotos) zugeschnitten
+  function processImage(file, opt) {
     return new Promise(function (resolve, reject) {
       var url = URL.createObjectURL(file), img = new Image();
       img.onload = function () {
         try {
           var w = img.naturalWidth, h = img.naturalHeight;
           if (!w || !h) throw new Error('Leeres Bild');
-          var box = null, manual = false;
-          if (opt && typeof opt === 'object') {
-            box = { u0: opt.x0 * w, u1: opt.x1 * w, v0: opt.y0 * h, v1: opt.y1 * h, ang: 0 };
-            manual = true;
-          } else if (opt) {
-            try { box = detectReceipt(img, w, h); } catch (e) { box = null; }
-          }
-          var srcW = box ? box.u1 - box.u0 : w, srcH = box ? box.v1 - box.v0 : h;
-          var s = Math.min(1, MAXEDGE / Math.max(srcW, srcH));
-          var cw = Math.max(1, Math.round(srcW * s)), ch = Math.max(1, Math.round(srcH * s));
-          var c = document.createElement('canvas');
-          c.width = cw; c.height = ch;
-          var g = c.getContext('2d');
-          g.fillStyle = '#fff'; g.fillRect(0, 0, cw, ch);
-          if (box) {
-            var eux = Math.cos(box.ang), euy = Math.sin(box.ang), evx = -euy, evy = eux;
-            var ox = box.u0 * eux + box.v0 * evx, oy = box.u0 * euy + box.v0 * evy;   // linke obere Ecke im Foto
-            g.setTransform(s * eux, s * evx, s * euy, s * evy,
-                           -s * (eux * ox + euy * oy), -s * (evx * ox + evy * oy));
+          var manual = !!(opt && typeof opt === 'object'), c, g, cw, ch, s, box = null, rot = 0, autoRot = false, theta, rect;
+          if (manual) {
+            var G = rotGeom(w, h, opt.theta);
+            var cx0 = opt.x0 * G.RW, cy0 = opt.y0 * G.RH, srcW = (opt.x1 - opt.x0) * G.RW, srcH = (opt.y1 - opt.y0) * G.RH;
+            s = Math.min(1, MAXEDGE / Math.max(srcW, srcH));
+            cw = Math.max(1, Math.round(srcW * s)); ch = Math.max(1, Math.round(srcH * s));
+            c = document.createElement('canvas'); c.width = cw; c.height = ch;
+            g = c.getContext('2d');
+            g.fillStyle = '#fff'; g.fillRect(0, 0, cw, ch);
+            g.setTransform(s * G.co, s * G.si, -s * G.si, s * G.co, s * (G.tx - cx0), s * (G.ty - cy0));
             g.drawImage(img, 0, 0);
             g.setTransform(1, 0, 0, 1, 0, 0);
+            enhance(g, cw, ch);
+            theta = opt.theta; rect = { x0: opt.x0, y0: opt.y0, x1: opt.x1, y1: opt.y1 };
           } else {
-            g.drawImage(img, 0, 0, cw, ch);
+            if (opt) { try { box = detectReceipt(img, w, h); } catch (e) { box = null; } }
+            var sW = box ? box.u1 - box.u0 : w, sH = box ? box.v1 - box.v0 : h;
+            s = Math.min(1, MAXEDGE / Math.max(sW, sH));
+            cw = Math.max(1, Math.round(sW * s)); ch = Math.max(1, Math.round(sH * s));
+            c = document.createElement('canvas'); c.width = cw; c.height = ch;
+            g = c.getContext('2d');
+            g.fillStyle = '#fff'; g.fillRect(0, 0, cw, ch);
+            if (box) {
+              var eux = Math.cos(box.ang), euy = Math.sin(box.ang), evx = -euy, evy = eux;
+              var ox = box.u0 * eux + box.v0 * evx, oy = box.u0 * euy + box.v0 * evy;   // linke obere Ecke im Foto
+              g.setTransform(s * eux, s * evx, s * euy, s * evy, -s * (eux * ox + euy * oy), -s * (evx * ox + evy * oy));
+              g.drawImage(img, 0, 0);
+              g.setTransform(1, 0, 0, 1, 0, 0);
+            } else {
+              g.drawImage(img, 0, 0, cw, ch);
+            }
+            enhance(g, cw, ch);
+            rot = detectRotation(c); autoRot = rot !== 0;
+            theta = rot - (box ? box.ang * 180 / Math.PI : 0);        // so ist das Foto gedreht, damit der Ausschnitt gerade steht
+            rect = boxRect(box, w, h, theta);
           }
-          enhance(g, cw, ch);
-          var autoRot = false;
-          if (rot === undefined) { rot = detectRotation(c); autoRot = rot !== 0; }
-          var out = rot ? rotateCanvas(c, rot) : c;
+          var out = (!manual && rot) ? rotateCanvas(c, rot) : c;
           var data = out.toDataURL('image/jpeg', QUALITY);
           URL.revokeObjectURL(url);
-          resolve({ dataUrl: data, w: out.width, h: out.height, bytes: dataUrlToBytes(data), cropped: !!box, manual: manual,
-                    opt: opt, rot: rot, autoRot: autoRot, box: box, iw: w, ih: h, tilt: box ? Math.round(box.ang * 1800 / Math.PI) / 10 : 0 });
+          resolve({ dataUrl: data, w: out.width, h: out.height, bytes: dataUrlToBytes(data), cropped: manual || !!box, manual: manual,
+                    opt: opt, rot: rot, autoRot: autoRot, box: box, iw: w, ih: h, theta: theta, rect: rect,
+                    tilt: box ? Math.round(box.ang * 1800 / Math.PI) / 10 : 0 });
         } catch (e) { URL.revokeObjectURL(url); reject(e); }
       };
       img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('Datei ist kein lesbares Bild')); };
@@ -812,16 +878,24 @@
   function photoBytes() { return photos.reduce(function (s, p) { return s + p.bytes.length; }, 0); }
   function kb(n) { return n >= 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.round(n / 1024) + ' KB'; }
 
+  // ---------- Anzeige der Belege ----------
+  function pending() { return photos.filter(function (p) { return !p.ok; }).length; }
+  function firstPending(from) {
+    var i;
+    for (i = (from || 0); i < photos.length; i++) if (!photos[i].ok) return i;
+    for (i = 0; i < photos.length; i++) if (!photos[i].ok) return i;
+    return -1;
+  }
   function renderPhotos() {
     var box = $('thumbs');
     box.textContent = '';
     photos.forEach(function (p, i) {
-      var w = el('div', 'ph');
+      var w = el('div', 'ph ' + (p.ok ? 'ok' : 'todo'));
       var im = document.createElement('img');
-      im.src = p.dataUrl; im.alt = 'Beleg ' + (i + 1) + ' – antippen für große Ansicht';
-      im.onclick = function () { openLightbox(i); };
+      im.src = p.dataUrl; im.alt = 'Beleg ' + (i + 1) + ' – antippen zum Prüfen';
+      im.onclick = function () { openReview(i); };
       w.appendChild(im);
-      w.appendChild(el('span', '', 'Seite ' + (i + 1) + ' · ' + cropLabel(p)));
+      w.appendChild(el('span', '', 'Seite ' + (i + 1) + ' · ' + (p.ok ? '✓ bestätigt' : 'bitte prüfen')));
       var x = el('button', '', '×');
       x.type = 'button'; x.setAttribute('aria-label', 'Beleg ' + (i + 1) + ' entfernen');
       x.onclick = function () { photos.splice(i, 1); renderPhotos(); onChange(); };
@@ -831,84 +905,163 @@
     var info = $('belegeInfo');
     info.className = 'ch';
     if (!photos.length) { info.textContent = init.belegePflicht ? 'Pflicht: mindestens ein Beleg.' : ''; return; }
-    var total = photoBytes();
+    var total = photoBytes(), pend = pending();
     info.textContent = photos.length + (photos.length === 1 ? ' Seite' : ' Seiten') + ' · ca. ' + kb(total) + ' als PDF' +
       (belegeSavedKey === photosKey() ? ' · bereits gespeichert' : '');
+    if (pend) { info.className = 'ch warn'; info.textContent += ' · ' + pend + (pend === 1 ? ' Seite' : ' Seiten') + ' noch nicht bestätigt (antippen)'; }
     if (total > MAXPDF) { info.className = 'ch warn'; info.textContent += ' – zu groß, bitte einzelne Fotos entfernen.'; }
   }
-  function cropLabel(p) {
-    var base = p.manual ? 'Ausschnitt angepasst' : (!p.crop ? 'Original' : (p.cropped ? 'zugeschnitten' : 'kein Rand erkannt'));
-    if (p.rot) base += ' · ' + (p.autoRot ? 'automatisch gedreht' : 'gedreht');
-    return base;
+  function putPhoto(i, r, old) {        // neu verarbeitete Seite an Stelle i einsetzen (muss erneut bestätigt werden)
+    r.id = ++photoSeq; r.file = old.file; r.crop = true; r.ok = false;
+    r.auto = old.auto || { theta: r.theta, rect: r.rect };
+    photos[i] = r;
   }
-  // Drehen um 90° (delta = 90 oder 270), Ausschnitt bleibt
-  function rotatePhoto(i, delta) {
-    var p = photos[i];
-    if (!p) return Promise.resolve();
-    var rot = ((p.rot || 0) + delta) % 360;
-    return processImage(p.file, p.opt, rot).then(function (r) {
-      r.id = ++photoSeq; r.file = p.file; r.crop = p.crop;
-      photos[i] = r;
-      renderPhotos(); onChange();
-    });
+
+  // ---------- Vollbild-Prüfung ----------
+  var rvIndex = -1, rvZoom = 1;
+  function layoutReview() {
+    var p = photos[rvIndex];
+    if (!p || $('rv').hidden) return;
+    var sc = $('rvScroll'), AW = sc.clientWidth - 16, AH = sc.clientHeight - 16;
+    var land = p.w > p.h, PW = land ? 841.89 : 595.28, PH = land ? 595.28 : 841.89, M = 24;
+    var k = Math.max(0.1, Math.min(AW / PW, AH / PH)) * rvZoom;
+    var pg = $('rvPage'), bx = $('rvBox');
+    pg.style.width = Math.round(PW * k) + 'px'; pg.style.height = Math.round(PH * k) + 'px';
+    bx.style.left = (M * k) + 'px'; bx.style.top = (M * k) + 'px';
+    bx.style.width = ((PW - 2 * M) * k) + 'px'; bx.style.height = ((PH - 2 * M) * k) + 'px';
   }
-  // Zuschnitt für ein Foto ein-/ausschalten (aus der Originaldatei neu berechnen)
-  function recrop(i, on) {
-    var p = photos[i];
-    if (!p) return Promise.resolve();
-    return processImage(p.file, on, p.rot).then(function (r) {
-      r.id = ++photoSeq; r.file = p.file; r.crop = on;
-      photos[i] = r;
-      renderPhotos(); onChange();
-    });
-  }
-  var lbIndex = -1;
-  function openLightbox(i) {
+  function openReview(i) {
     var p = photos[i];
     if (!p) return;
-    lbIndex = i;
-    $('lbImg').src = p.dataUrl;
-    $('lbTitle').textContent = 'Seite ' + (i + 1) + ' von ' + photos.length + ' · ' + cropLabel(p) +
-      (p.cropped && p.tilt ? ' (um ' + String(Math.abs(p.tilt)).replace('.', ',') + '° gerade gedreht)' : '');
-    $('lbCrop').textContent = p.manual ? 'Automatisch' : (p.crop ? 'Original zeigen' : 'Zuschneiden');
-    setEditMode(false);
-    $('lightbox').hidden = false;
+    rvIndex = i; rvZoom = 1;
+    $('ed').hidden = true;
+    $('rvImg').src = p.dataUrl;
+    $('rvTitle').textContent = 'Seite ' + (i + 1) + ' von ' + photos.length + ' – so sieht sie im PDF aus';
+    $('rvInfo').textContent = 'Alles drauf und gut lesbar? Zum Prüfen mit „Zoom“ vergrößern.' + (p.ok ? ' (bereits bestätigt)' : '');
+    $('rvZoom').textContent = 'Zoom';
+    $('rv').hidden = false;
+    layoutReview();
   }
-  function closeLightbox() { setEditMode(false); $('lightbox').hidden = true; lbIndex = -1; }
+  function closeReview() { $('rv').hidden = true; rvIndex = -1; }
+  $('rvX').onclick = closeReview;
+  $('rvZoom').onclick = function () {
+    rvZoom = rvZoom === 1 ? 2.6 : 1;
+    $('rvZoom').textContent = rvZoom === 1 ? 'Zoom' : 'Ganze Seite';
+    layoutReview();
+    var sc = $('rvScroll'); sc.scrollLeft = (sc.scrollWidth - sc.clientWidth) / 2; sc.scrollTop = 0;
+  };
+  $('rvOk').onclick = function () {
+    var i = rvIndex, p = photos[i];
+    if (!p) return;
+    p.ok = true;
+    renderPhotos(); onChange();
+    var nx = firstPending(i + 1);
+    if (nx >= 0) openReview(nx); else closeReview();
+  };
+  $('rvDel').onclick = function () {
+    if (rvIndex < 0) return;
+    photos.splice(rvIndex, 1);
+    var nx = firstPending(0);
+    renderPhotos(); onChange();
+    if (nx >= 0 && photos.length) openReview(Math.min(nx, photos.length - 1)); else closeReview();
+  };
+  window.addEventListener('resize', layoutReview);
 
-  // ---------- Ausschnitt von Hand anpassen ----------
-  var ce = { x0: 0.05, y0: 0.05, x1: 0.95, y1: 0.95, url: '' };
-  function setEditMode(on) {
-    $('lbImg').hidden = on; $('lbEdit').hidden = !on;
-    $('lbBtns').hidden = on; $('lbEditBtns').hidden = !on;
-    if (!on && ce.url) { try { URL.revokeObjectURL(ce.url); } catch (e) {} ce.url = ''; $('ceImg').removeAttribute('src'); }
+  // ---------- Ausschnitt und Drehwinkel anpassen ----------
+  var ce = { x0: 0.05, y0: 0.05, x1: 0.95, y1: 0.95 };
+  var ed = { i: -1, img: null, url: '', quarter: 0, fine: 0, pending: false };
+  function edTheta() { return ed.quarter + ed.fine; }
+  function norm180(t) { t = ((t % 360) + 360) % 360; return t > 180 ? t - 360 : t; }
+  function setTheta(theta) {
+    theta = norm180(theta);
+    ed.quarter = Math.round(theta / 90) * 90;
+    ed.fine = Math.round((theta - ed.quarter) * 10) / 10;
+    ed.quarter = ((ed.quarter % 360) + 360) % 360;
   }
-  function boxBounds(p) {                                  // umschließendes Rechteck (Anteile) des erkannten, ggf. gedrehten Ausschnitts
-    var b = p.box;
-    if (!b) return { x0: 0.06, y0: 0.06, x1: 0.94, y1: 0.94 };
-    var eux = Math.cos(b.ang), euy = Math.sin(b.ang), pts = [[b.u0, b.v0], [b.u1, b.v0], [b.u0, b.v1], [b.u1, b.v1]];
-    var xs = pts.map(function (q) { return q[0] * eux - q[1] * euy; }), ys = pts.map(function (q) { return q[0] * euy + q[1] * eux; });
-    var cl = function (v) { return Math.max(0, Math.min(1, v)); };
-    return { x0: cl(Math.min.apply(null, xs) / p.iw), x1: cl(Math.max.apply(null, xs) / p.iw),
-             y0: cl(Math.min.apply(null, ys) / p.ih), y1: cl(Math.max.apply(null, ys) / p.ih) };
-  }
+  function fmtDeg(v) { return String(Math.round(v * 10) / 10).replace('.', ','); }
   function drawRect() {
     var r = $('ceRect');
     r.style.left = ce.x0 * 100 + '%'; r.style.top = ce.y0 * 100 + '%';
     r.style.width = (ce.x1 - ce.x0) * 100 + '%'; r.style.height = (ce.y1 - ce.y0) * 100 + '%';
   }
+  var edRaf = 0;
+  function drawPreview() {
+    if (!ed.img) return;
+    var W = ed.img.naturalWidth, H = ed.img.naturalHeight, th = edTheta();
+    updAngle();
+    var G = rotGeom(W, H, th), k = Math.min(1, 1400 / Math.max(G.RW, G.RH));
+    var cv = $('edCv');
+    cv.width = Math.max(1, Math.round(G.RW * k)); cv.height = Math.max(1, Math.round(G.RH * k));
+    var g = cv.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height);
+    g.setTransform(k * G.co, k * G.si, -k * G.si, k * G.co, k * G.tx, k * G.ty);
+    g.drawImage(ed.img, 0, 0);
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    $('ed').setAttribute('data-ready', '1');
+  }
+  function updAngle() {
+    $('edAng').value = ed.fine;
+    $('edAngTxt').textContent = 'Drehwinkel: ' + fmtDeg(norm180(edTheta())) + '° (positiv = im Uhrzeigersinn)';
+  }
+  function schedulePreview() {
+    if (edRaf) return;
+    edRaf = (window.requestAnimationFrame || function (f) { return setTimeout(f, 16); })(function () { edRaf = 0; drawPreview(); });
+  }
+  function rotRect(dir) {                       // Ausschnitt mit einer 90°-Drehung mitdrehen
+    var r = { x0: ce.x0, y0: ce.y0, x1: ce.x1, y1: ce.y1 };
+    if (dir > 0) { ce.x0 = 1 - r.y1; ce.x1 = 1 - r.y0; ce.y0 = r.x0; ce.y1 = r.x1; }
+    else { ce.x0 = r.y0; ce.x1 = r.y1; ce.y0 = 1 - r.x1; ce.y1 = 1 - r.x0; }
+  }
   function openEditor() {
-    var p = photos[lbIndex];
+    var i = rvIndex, p = photos[i];
     if (!p) return;
-    var b = boxBounds(p);
-    ce.x0 = b.x0; ce.y0 = b.y0; ce.x1 = b.x1; ce.y1 = b.y1;
-    if (ce.url) { try { URL.revokeObjectURL(ce.url); } catch (e) {} }
-    ce.url = URL.createObjectURL(p.file);
-    $('ceImg').src = ce.url;
-    setEditMode(true);
-    $('lbTitle').textContent = 'Ausschnitt: Ecken oder Fläche ziehen';
+    ed.i = i;
+    if (ed.url) { try { URL.revokeObjectURL(ed.url); } catch (e) {} }
+    ed.url = URL.createObjectURL(p.file);
+    ed.img = null;
+    setTheta(p.theta || 0);
+    var r = p.rect || { x0: 0, y0: 0, x1: 1, y1: 1 };
+    ce.x0 = r.x0; ce.y0 = r.y0; ce.x1 = r.x1; ce.y1 = r.y1;
+    var im = new Image();
+    $('ed').removeAttribute('data-ready');
+    updAngle();
+    im.onload = function () { ed.img = im; drawPreview(); drawRect(); };
+    im.src = ed.url;
+    $('rv').hidden = true;
+    $('ed').hidden = false;
+    $('edOk').disabled = false;
     drawRect();
   }
+  function closeEditor() {
+    $('ed').hidden = true; ed.img = null;
+    if (ed.url) { try { URL.revokeObjectURL(ed.url); } catch (e) {} ed.url = ''; }
+  }
+  $('rvAdj').onclick = openEditor;
+  $('edCancel').onclick = function () { var i = ed.i; closeEditor(); openReview(i); };
+  $('edL').onclick = function () { ed.quarter = (ed.quarter + 270) % 360; rotRect(-1); drawRect(); drawPreview(); };
+  $('edR').onclick = function () { ed.quarter = (ed.quarter + 90) % 360; rotRect(1); drawRect(); drawPreview(); };
+  function nudge(d) { ed.fine = Math.max(-45, Math.min(45, Math.round((ed.fine + d) * 10) / 10)); schedulePreview(); }
+  $('edM').onclick = function () { nudge(-0.5); };
+  $('edP').onclick = function () { nudge(0.5); };
+  $('edAng').addEventListener('input', function () { ed.fine = parseFloat(this.value) || 0; schedulePreview(); });
+  $('edFull').onclick = function () { ce.x0 = 0; ce.y0 = 0; ce.x1 = 1; ce.y1 = 1; drawRect(); };
+  $('edAuto').onclick = function () {
+    var p = photos[ed.i];
+    if (!p || !p.auto) return;
+    setTheta(p.auto.theta);
+    var r = p.auto.rect; ce.x0 = r.x0; ce.y0 = r.y0; ce.x1 = r.x1; ce.y1 = r.y1;
+    drawPreview(); drawRect();
+  };
+  $('edOk').onclick = function () {
+    var i = ed.i, p = photos[i];
+    if (!p) return;
+    $('edOk').disabled = true;
+    processImage(p.file, { theta: edTheta(), x0: ce.x0, y0: ce.y0, x1: ce.x1, y1: ce.y1 }).then(function (r) {
+      putPhoto(i, r, p);
+      closeEditor();
+      renderPhotos(); onChange(); openReview(i);
+    }, function () { $('edOk').disabled = false; });
+  };
   (function () {
     var drag = null, MIN = 0.06;
     function pt(e) {
@@ -941,43 +1094,6 @@
     $('ceRect').addEventListener('pointerup', end);
     $('ceRect').addEventListener('pointercancel', end);
   })();
-  $('lbAdjust').onclick = openEditor;
-  function rotBtn(delta) {
-    return function () {
-      var i = lbIndex;
-      if (i < 0 || !photos[i]) return;
-      $('lbRotL').disabled = $('lbRotR').disabled = true;
-      rotatePhoto(i, delta).then(function () { $('lbRotL').disabled = $('lbRotR').disabled = false; openLightbox(i); },
-                                 function () { $('lbRotL').disabled = $('lbRotR').disabled = false; });
-    };
-  }
-  $('lbRotL').onclick = rotBtn(270);
-  $('lbRotR').onclick = rotBtn(90);
-  $('lbEditCancel').onclick = function () { openLightbox(lbIndex); };
-  $('lbEditOk').onclick = function () {
-    var i = lbIndex, p = photos[i];
-    if (!p) return;
-    $('lbEditOk').disabled = true;
-    processImage(p.file, { x0: ce.x0, y0: ce.y0, x1: ce.x1, y1: ce.y1 }, p.rot).then(function (r) {
-      r.id = ++photoSeq; r.file = p.file; r.crop = true;
-      photos[i] = r;
-      $('lbEditOk').disabled = false;
-      renderPhotos(); onChange(); openLightbox(i);
-    }, function () { $('lbEditOk').disabled = false; });
-  };
-  $('lbClose').onclick = closeLightbox;
-  $('lightbox').addEventListener('click', function (e) { if (e.target === $('lightbox')) closeLightbox(); });
-  $('lbCrop').onclick = function () {
-    var i = lbIndex, p = photos[i];
-    if (!p) return;
-    $('lbCrop').disabled = true;
-    recrop(i, p.manual ? true : !p.crop).then(function () { $('lbCrop').disabled = false; openLightbox(i); },
-                            function () { $('lbCrop').disabled = false; });
-  };
-  $('lbDel').onclick = function () {
-    if (lbIndex < 0) return;
-    photos.splice(lbIndex, 1); closeLightbox(); renderPhotos(); onChange();
-  };
 
   function addFiles(list) {
     var files = Array.prototype.slice.call(list || []);
@@ -985,17 +1101,23 @@
     var room = MAXPHOTOS - photos.length;
     var note = '';
     if (files.length > room) { files = files.slice(0, Math.max(room, 0)); note = 'Maximal ' + MAXPHOTOS + ' Seiten.'; }
+    var firstNew = -1;
     var info = $('belegeInfo');
     info.className = 'ch'; info.textContent = 'Foto wird verarbeitet …';
     files.reduce(function (p, f) {
       return p.then(function () {
         var on = init.belegeCrop !== false;
-        return processImage(f, on).then(function (r) { r.id = ++photoSeq; r.file = f; r.crop = on; photos.push(r); renderPhotos(); });
+        return processImage(f, on).then(function (r) {
+          r.id = ++photoSeq; r.file = f; r.crop = on; r.ok = false; r.auto = { theta: r.theta, rect: r.rect };
+          if (firstNew < 0) firstNew = photos.length;
+          photos.push(r); renderPhotos();
+        });
       });
     }, Promise.resolve()).then(function () {
       renderPhotos();
       if (note) { info.className = 'ch warn'; info.textContent += ' ' + note; }
       onChange();
+      if (firstNew >= 0) openReview(firstNew);
     }, function (e) {
       renderPhotos();
       info.className = 'ch warn';
@@ -1095,6 +1217,7 @@
     if (init.diffCheck && u.tillhub === undefined) problems.push('Bitte bei „Abgleich mit Tillhub“ den Barbestand laut Tillhub („App berechnet“) eintragen.');
     if (init.diffCheck && typeof u.tillhub === 'number' && isNaN(u.tillhub)) problems.push('Der Barbestand laut Tillhub ist keine gültige Zahl.');
     if (init.belegePflicht && !photos.length) problems.push('Bitte mindestens einen EC-Beleg fotografieren.');
+    if (pending()) { var pi = firstPending(0); problems.push('Bitte jeden Beleg-Scan prüfen und mit „Alles drauf und lesbar“ bestätigen (Seite ' + (pi + 1) + ').'); }
     if (photoBytes() > MAXPDF) problems.push('Die EC-Belege sind zu groß. Bitte einzelne Fotos entfernen.');
     if (problems.length) { showResult('err', problems.join('\n')); return; }
     $('result').hidden = true;
